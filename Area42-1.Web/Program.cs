@@ -1,5 +1,7 @@
 using Area42_1.Web;
 using Area42_1.Web.Components;
+using Area42_1.Web.Components.Services;
+using Area42_1.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +10,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddScoped<AppUiState>();
+builder.Services.AddHttpClient<DutchAddressLookup>();
+builder.Services.AddScoped<DutchAddressRepository>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<AccountValidationService>();
+builder.Services.AddScoped<AdminAuthorizationService>();
+builder.Services.AddScoped<KillSwitchService>();
+builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
+
+// Admin API service for backend integration
+builder.Services.AddHttpClient<AdminApiService>(client =>
+{
+    var apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7001";
+    client.BaseAddress = new Uri(apiUrl);
+});
 
 builder.Services.AddOutputCache();
 
@@ -42,16 +59,19 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
+app.UseRouting();
+
 app.UseAntiforgery();
 
 app.UseOutputCache();
 
 app.UseSession();
 
-app.MapStaticAssets();
-
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+app.MapRazorPages();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.MapDefaultEndpoints();
 

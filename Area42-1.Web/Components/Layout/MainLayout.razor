@@ -1,4 +1,33 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject Area42_1.Web.Components.Services.AppUiState UiState
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        UiState.OnChange += StateHasChanged;
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UiState.InitializeAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        UiState.OnChange -= StateHasChanged;
+    }
+
+    private string T(string dutch, string english) => UiState.Language == "nl" ? dutch : english;
+
+    private Task ToggleLanguageAsync() => UiState.ToggleLanguageAsync();
+
+    private Task ToggleThemeAsync() => UiState.ToggleThemeAsync();
+}
 
 <nav class="navbar" style="background-color: #003580; padding: 1rem 0; margin-bottom: 2rem;">
     <div class="container" style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
@@ -6,9 +35,15 @@
             <a href="/" style="color: white; text-decoration: none;">🏡 Area42</a>
         </div>
         <div style="display: flex; gap: 2rem; align-items: center;">
-            <a href="/" style="color: white; text-decoration: none;">Home</a>
-            <a href="/accommodations" style="color: white; text-decoration: none;">Accommodations</a>
-            <a href="/login" style="color: white; text-decoration: none;">Login</a>
+            <a href="/" style="color: white; text-decoration: none;">@T("Start", "Home")</a>
+            <a href="/accommodations" style="color: white; text-decoration: none;">@T("Accommodaties", "Accommodations")</a>
+            <a href="/login" style="color: white; text-decoration: none;">@T("Inloggen", "Login")</a>
+            <button class="btn btn-outline" style="border-color: white; color: white; padding: 0.4rem 0.8rem;" @onclick="ToggleLanguageAsync">
+                @(UiState.Language == "nl" ? "English" : "Nederlands")
+            </button>
+            <button class="theme-toggle" style="color: white;" @onclick="ToggleThemeAsync" aria-label="Toggle theme">
+                @(UiState.Theme == "dark" ? "☀️" : "🌙")
+            </button>
         </div>
     </div>
 </nav>
@@ -18,6 +53,6 @@
 </main>
 
 <footer style="background-color: #2d2d2d; color: #e0e0e0; padding: 2rem; text-align: center; margin-top: 4rem;">
-    <p>&copy; 2024 Area42 Reservation System. All rights reserved.</p>
+    <p>&copy; 2024 Area42 Reserveringssysteem. @T("Alle rechten voorbehouden.", "All rights reserved.")</p>
 </footer>
 

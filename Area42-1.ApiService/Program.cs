@@ -5,6 +5,7 @@ using System.Text;
 using Area42_1.ApiService.Data;
 using Area42_1.ApiService.Data.Repositories;
 using Area42_1.ApiService.Services;
+using Area42_1.ApiService.Models.Admin;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +44,52 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Admin portal authorization policies
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var rankClaim = context.User.FindFirst("rank")?.Value;
+            return rankClaim == "Admin" || rankClaim == "SuperAdmin" || rankClaim == "SeniorManager";
+        }));
+
+    options.AddPolicy("SuperAdminOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var rankClaim = context.User.FindFirst("rank")?.Value;
+            return rankClaim == "SuperAdmin";
+        }));
+
+    options.AddPolicy("SecurityAdminOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var rankClaim = context.User.FindFirst("rank")?.Value;
+            return rankClaim == "SuperAdmin" || rankClaim == "Admin";
+        }));
+
+    options.AddPolicy("FinancialAccessOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var rankClaim = context.User.FindFirst("rank")?.Value;
+            return rankClaim == "CustomerSupport" || rankClaim == "BookingManager" || rankClaim == "PropertyManager" 
+                || rankClaim == "SeniorManager" || rankClaim == "Admin" || rankClaim == "SuperAdmin";
+        }));
+
+    options.AddPolicy("FinancialAuditOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var rankClaim = context.User.FindFirst("rank")?.Value;
+            return rankClaim == "SeniorManager" || rankClaim == "Admin" || rankClaim == "SuperAdmin";
+        }));
+
+    options.AddPolicy("FinancialApprovalOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var rankClaim = context.User.FindFirst("rank")?.Value;
+            return rankClaim == "SeniorManager" || rankClaim == "Admin" || rankClaim == "SuperAdmin";
+        }));
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

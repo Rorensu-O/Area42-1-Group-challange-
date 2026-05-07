@@ -1,32 +1,30 @@
 @page "/login"
+@inherits LocalizedComponentBase
 
-<PageTitle>Login - Area42</PageTitle>
+<PageTitle>@T("Inloggen - Area42", "Login - Area42")</PageTitle>
 
 <div style="max-width: 400px; margin: 3rem auto; padding: 0 1rem;">
     <div style="border: 1px solid #ddd; border-radius: 8px; padding: 2rem; background: white;">
-        <h2 style="text-align: center; margin-bottom: 2rem;">Login</h2>
+        <h2 style="text-align: center; margin-bottom: 2rem;">@T("Inloggen", "Login")</h2>
 
         <form>
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
-                <input type="email" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" placeholder="your@email.com" />
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">@T("E-mail", "Email")</label>
+                <input type="email" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" placeholder="@T("jouw@email.com", "your@email.com")" />
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">@T("Wachtwoord", "Password")</label>
                 <input type="password" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" placeholder="••••••••" />
             </div>
 
             <button type="submit" style="width: 100%; background: #003580; color: white; padding: 0.75rem; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
-                Login
+                @T("Inloggen", "Login")
             </button>
         </form>
 
         <p style="text-align: center; margin-top: 1.5rem;">
-            Don't have an account? <a href="/register" style="color: #003580; text-decoration: none;">Register here</a>
+            @T("Nog geen account?", "Don't have an account?") <a href="/register" style="color: #003580; text-decoration: none;">@T("Registreer hier", "Register here")</a>
         </p>
     </div>
 </div>
-
-@code {
-}

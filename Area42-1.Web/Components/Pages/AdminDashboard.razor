@@ -1,117 +1,139 @@
 @page "/admin"
-@layout MainLayout
-@using Area42_1.Web.Components.Layout
+@page "/admin/dashboard"
+@using Area42_1.Web.Models
+@using Area42_1.Web.Services
+@using Microsoft.AspNetCore.Components.Routing
+@inherits LocalizedComponentBase
+@inject AdminAuthorizationService AuthService
+@inject KillSwitchService KillSwitchService
+@inject NavigationManager Navigation
 
-<div class="admin-container">
-    <div class="admin-sidebar">
-        <nav class="admin-nav">
-            <ul>
-                <li><a href="/admin/dashboard" class="nav-link active">Dashboard</a></li>
-                <li><a href="/admin/accommodations" class="nav-link">Manage Accommodations</a></li>
-                <li><a href="/admin/reservations" class="nav-link">Manage Reservations</a></li>
-                <li><a href="/admin/users" class="nav-link">Manage Users</a></li>
-                <li><a href="/admin/reports" class="nav-link">Reports & Analytics</a></li>
-            </ul>
-        </nav>
+<PageTitle>@T("Admin Dashboard - Area42", "Admin Dashboard - Area42")</PageTitle>
+
+<div class="admin-wrapper">
+    <!-- Security Warning Banner -->
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 2rem; border-radius: 4px;">
+        <strong>⚠️ @T("Waarschuwing:", "Warning:")</strong> @T("Al uw acties in dit systeem worden gelogd en gemonitord.", "All your actions in this system are logged and monitored.")
     </div>
 
-    <div class="admin-content">
-        <div class="container mt-4">
-            <h1>Admin Dashboard</h1>
-
-            <div class="grid grid-3 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Total Accommodations</h3>
-                    </div>
-                    <div class="stat-value">15</div>
-                    <p class="text-small">3 Bungalows, 5 Chalets, 7 Camping Sites</p>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Active Reservations</h3>
-                    </div>
-                    <div class="stat-value" style="color: #00c0a3;">42</div>
-                    <p class="text-small">This month: 38 bookings</p>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Total Revenue</h3>
-                    </div>
-                    <div class="stat-value" style="color: #00c0a3;">€24,500</div>
-                    <p class="text-small">Last 30 days</p>
-                </div>
-            </div>
-
-            <div class="grid grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Recent Reservations</h3>
-                    </div>
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Guest</th>
-                                <th>Accommodation</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>John Doe</td>
-                                <td>Luxury Chalet</td>
-                                <td><span class="badge badge-success">Confirmed</span></td>
-                            </tr>
-                            <tr>
-                                <td>Jane Smith</td>
-                                <td>Cozy Bungalow</td>
-                                <td><span class="badge badge-success">Confirmed</span></td>
-                            </tr>
-                            <tr>
-                                <td>Bob Johnson</td>
-                                <td>Nature Camping</td>
-                                <td><span class="badge badge-info">Pending</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3>System Status</h3>
-                    </div>
-                    <div class="status-item">
-                        <span>Database Connection</span>
-                        <span class="status-indicator" style="background-color: #00c0a3;"></span>
-                    </div>
-                    <div class="status-item">
-                        <span>API Service</span>
-                        <span class="status-indicator" style="background-color: #00c0a3;"></span>
-                    </div>
-                    <div class="status-item">
-                        <span>Web Application</span>
-                        <span class="status-indicator" style="background-color: #00c0a3;"></span>
-                    </div>
-                </div>
-            </div>
+    <!-- Admin Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div>
+            <h1 style="margin: 0;">@T("Admin Dashboard", "Admin Dashboard")</h1>
+            <small style="color: #666;">@T("Rang:", "Rank:") <span class="badge bg-info">@CurrentUserRank</span></small>
         </div>
+        <button class="btn btn-sm btn-outline-danger" @onclick="Logout">@T("Uitloggen", "Logout")</button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        @if (visibleSections.Contains("overview"))
+        {
+            <li class="nav-item">
+                <a class="nav-link @(activeTab == "overview" ? "active" : "")" 
+                   href="#" @onclick:preventDefault @onclick='() => SelectTab("overview")'>
+                    📊 @T("Overzicht", "Overview")
+                </a>
+            </li>
+        }
+        @if (visibleSections.Contains("security_dashboard"))
+        {
+            <li class="nav-item">
+                <a class="nav-link @(activeTab == "security" ? "active" : "")" 
+                   href="#" @onclick:preventDefault @onclick='() => SelectTab("security")'>
+                    🔒 @T("Veiligheid", "Security")
+                </a>
+            </li>
+        }
+        @if (visibleSections.Contains("staff_management"))
+        {
+            <li class="nav-item">
+                <a class="nav-link @(activeTab == "staff" ? "active" : "")" 
+                   href="#" @onclick:preventDefault @onclick='() => SelectTab("staff")'>
+                    👥 @T("Personeelsbeheer", "Staff Management")
+                </a>
+            </li>
+        }
+        @if (visibleSections.Contains("gdpr_tools"))
+        {
+            <li class="nav-item">
+                <a class="nav-link @(activeTab == "gdpr" ? "active" : "")" 
+                   href="#" @onclick:preventDefault @onclick='() => SelectTab("gdpr")'>
+                    ⚖️ @T("GDPR-tools", "GDPR Tools")
+                </a>
+            </li>
+        }
+        @if (visibleSections.Contains("financial_reports"))
+        {
+            <li class="nav-item">
+                <a class="nav-link @(activeTab == "financial" ? "active" : "")" 
+                   href="#" @onclick:preventDefault @onclick='() => SelectTab("financial")'>
+                    💰 @T("Financieel", "Financial")
+                </a>
+            </li>
+        }
+    </ul>
+
+    <!-- Content Area -->
+    <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        @if (activeTab == "overview" && visibleSections.Contains("overview"))
+        {
+            <DashboardOverview Sections="visibleSections" />
+        }
+
+        @if (activeTab == "security" && visibleSections.Contains("security_dashboard"))
+        {
+            <SecurityDashboard Rank="CurrentUserRank" />
+        }
+
+        @if (activeTab == "staff" && visibleSections.Contains("staff_management"))
+        {
+            <StaffManagement Rank="CurrentUserRank" />
+        }
+
+        @if (activeTab == "gdpr" && visibleSections.Contains("gdpr_tools"))
+        {
+            <GdprTools Rank="CurrentUserRank" />
+        }
+
+        @if (activeTab == "financial" && visibleSections.Contains("financial_reports"))
+        {
+            <FinancialReports Rank="CurrentUserRank" />
+        }
     </div>
 </div>
 
 <style>
-    .admin-container {
-        display: flex;
-        min-height: calc(100vh - 60px);
+.admin-wrapper {
+    padding: 2rem;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+</style>
+
+@code {
+    private AdminRank? CurrentUserRank = AdminRank.SuperAdmin;
+    private string activeTab = "overview";
+    private string[] visibleSections = Array.Empty<string>();
+
+    protected override void OnInitialized()
+    {
+        visibleSections = AuthService.GetVisibleDashboardSections(CurrentUserRank);
+        activeTab = visibleSections.FirstOrDefault() ?? "overview";
     }
 
-    .admin-sidebar {
-        width: 250px;
-        background-color: var(--dark-secondary);
-        border-right: 1px solid var(--border-dark);
-        padding: 2rem 0;
+    private void SelectTab(string tab)
+    {
+        activeTab = tab;
     }
+
+    private async Task Logout()
+    {
+        // In production: sign out user and navigate to login
+        Navigation.NavigateTo("/");
+    }
+}
+
 
     .admin-nav ul {
         list-style: none;
@@ -146,85 +168,3 @@
         overflow-y: auto;
     }
 
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #003580;
-        margin: 1rem 0;
-    }
-
-    .text-small {
-        font-size: 0.875rem;
-        color: #666;
-    }
-
-    .admin-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .admin-table th {
-        background-color: var(--border-light);
-        padding: 0.75rem;
-        text-align: left;
-        font-weight: 600;
-    }
-
-    .admin-table td {
-        padding: 0.75rem;
-        border-bottom: 1px solid var(--border-light);
-    }
-
-    .admin-table tr:hover {
-        background-color: rgba(0, 198, 163, 0.05);
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-
-    .badge-success {
-        background-color: #e8f5e9;
-        color: #1b5e20;
-    }
-
-    .badge-info {
-        background-color: #e3f2fd;
-        color: #01579b;
-    }
-
-    .status-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-light);
-    }
-
-    .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-
-    @@media (max-width: 768px) {
-        .admin-sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid var(--border-dark);
-        }
-
-        .admin-container {
-            flex-direction: column;
-        }
-    }
-</style>
-
-@code {
-
-}
