@@ -21,13 +21,6 @@ builder.Services.AddScoped<AdminAuthorizationService>();
 builder.Services.AddScoped<KillSwitchService>();
 builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
 
-// Admin API service for backend integration
-builder.Services.AddHttpClient<AdminApiService>(client =>
-{
-    var apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7001";
-    client.BaseAddress = new Uri(apiUrl);
-});
-
 builder.Services.AddOutputCache();
 
 // HTTP client for API communication

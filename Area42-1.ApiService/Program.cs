@@ -127,11 +127,12 @@ app.MapControllers();
 app.MapGet("/", () => "Area42 Reservation API is running.");
 app.MapDefaultEndpoints();
 
-// Apply migrations
+// Apply migrations and seed database
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<Area42Context>();
     db.Database.Migrate();
+    DatabaseSeeder.SeedDatabase(db);
 }
 
 app.Run();
