@@ -12,7 +12,14 @@ jobs:
 
       - name: Prepare Dockerfile
         run: cp Dockerfile.Web Dockerfile
-
+        
+      - name: Force correct Dockerfile
+        run: |
+          cp Dockerfile.Web Dockerfile
+          sed -i 's/EXPOSE 80 443/EXPOSE 80/g' Dockerfile
+          sed -i '/EXPOSE 443/d' Dockerfile
+          grep -n "EXPOSE\|ASPNETCORE_URLS" Dockerfile
+    
       - name: Create deployment zip
         run: zip -r deploy-web-linux.zip Dockerfile Area42-1.Web Area42-1.ServiceDefaults
 
