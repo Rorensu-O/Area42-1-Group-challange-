@@ -103,20 +103,6 @@ cd Area42-1
 
 ### Test Accounts (Auto-Seeded)
 
-**Admin Login:**
-```
-Email: superadmin@area42.nl
-Password: SuperAdmin@123
-```
-
-**Other Admin Accounts:**
-- admin1@area42.nl / Admin@123
-- propertymanager@area42.nl / Property@111
-- bookingmanager@area42.nl / Booking@222
-
-**Customer Accounts:**
-- guest1@example.com / Guest@123
-- guest2@example.com / Guest@456
 
 ### Access Points
 | URL | Purpose |
@@ -249,23 +235,7 @@ docker-compose up
 # API: http://localhost:7001
 ```
 
-### Mock Data Included
 
-**Admin Users (Ready to Login)**
-| Email | Password | Role |
-|-------|----------|------|
-| superadmin@area42.nl | SuperAdmin@123 | Super Admin |
-| admin1@area42.nl | Admin@123 | Admin |
-| propertymanager@area42.nl | Property@111 | Property Manager |
-| bookingmanager@area42.nl | Booking@222 | Booking Manager |
-| support@area42.nl | Support@333 | Support Staff |
-| hrmanager@area42.nl | HRManager@444 | HR Manager |
-
-**Customer Users**
-| Email | Password |
-|-------|----------|
-| guest1@example.com | Guest@123 |
-| guest2@example.com | Guest@456 |
 
 **Accommodations**
 - 6 sample bungalows, chalets, and camping accommodations
