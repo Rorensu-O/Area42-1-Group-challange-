@@ -129,6 +129,9 @@ app.MapGet("/", () => "Area42 Reservation API is running.");
 app.MapDefaultEndpoints();
 
 
+// 👇 DIT HIER IS DE CORRECTE PLEK
+using (var scope = app.Services.CreateScope())
+{
     var db = scope.ServiceProvider.GetRequiredService<Area42Context>();
     db.Database.Migrate();
     DatabaseSeeder.SeedDatabase(db);
