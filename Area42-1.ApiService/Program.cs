@@ -24,7 +24,7 @@ builder.Services.AddDbContext<Area42Context>(options =>
     options.UseSqlServer(connectionString)
 );
 
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
