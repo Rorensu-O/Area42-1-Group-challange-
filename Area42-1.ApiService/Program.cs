@@ -7,6 +7,10 @@ using Area42_1.ApiService.Data.Repositories;
 using Area42_1.ApiService.Services;
 using Area42_1.ApiService.Models.Admin;
 
+// Apply migrations and seed database
+using (var scope = app.Services.CreateScope())
+{
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -16,10 +20,6 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-
-// Apply migrations and seed database
-using (var scope = app.Services.CreateScope())
-{
 
 // Database context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
