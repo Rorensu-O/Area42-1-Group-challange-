@@ -7,10 +7,6 @@ using Area42_1.ApiService.Data.Repositories;
 using Area42_1.ApiService.Services;
 using Area42_1.ApiService.Models.Admin;
 
-// Apply migrations and seed database
-using (var scope = app.Services.CreateScope())
-{
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -28,7 +24,9 @@ builder.Services.AddDbContext<Area42Context>(options =>
     options.UseSqlServer(connectionString)
 );
 
-
+// Apply migrations and seed database
+using (var scope = app.Services.CreateScope())
+{
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
