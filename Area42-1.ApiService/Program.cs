@@ -17,6 +17,10 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
+// Apply migrations and seed database
+using (var scope = app.Services.CreateScope())
+{
+
 // Database context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Server=(localdb)\\mssqllocaldb;Database=Area42;Trusted_Connection=true;";
@@ -126,9 +130,7 @@ app.MapControllers();
 app.MapGet("/", () => "Area42 Reservation API is running.");
 app.MapDefaultEndpoints();
 
-// Apply migrations and seed database
-using (var scope = app.Services.CreateScope())
-{
+
     var db = scope.ServiceProvider.GetRequiredService<Area42Context>();
     db.Database.Migrate();
     DatabaseSeeder.SeedDatabase(db);
