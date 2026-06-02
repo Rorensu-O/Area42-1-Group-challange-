@@ -24,23 +24,22 @@ builder.Services.AddDbContext<Area42Context>(options =>
     options.UseSqlServer(connectionString)
 );
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? Guid.NewGuid().ToString();
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "Area42";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "Area42Client";
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        options.Authority = "http://localhost:8080/realms/Area42";
+        options.Audience = "area42-web";
+
+        options.RequireHttpsMetadata = false; // DEV ONLY
+
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            ValidateIssuerSigningKey = true
         };
     });
 
