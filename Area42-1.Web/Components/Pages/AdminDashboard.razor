@@ -76,6 +76,42 @@
                             </a>
                         </li>
                     }
+                    @if (visibleSections.Contains("accommodations_management"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "accommodations" ? "active" : "")" 
+                               href="#" @onclick:preventDefault @onclick='() => SelectTab("accommodations")'>
+                                🏠 @T("Accommodaties", "Accommodations")
+                            </a>
+                        </li>
+                    }
+                    @if (visibleSections.Contains("pricing_management"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "pricing" ? "active" : "")" 
+                               href="#" @onclick:preventDefault @onclick='() => SelectTab("pricing")'>
+                                💰 @T("Prijzen", "Pricing")
+                            </a>
+                        </li>
+                    }
+                    @if (visibleSections.Contains("reservations_management"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "reservations" ? "active" : "")" 
+                               href="#" @onclick:preventDefault @onclick='() => SelectTab("reservations")'>
+                                📅 @T("Reserveringen", "Reservations")
+                            </a>
+                        </li>
+                    }
+                    @if (visibleSections.Contains("customers_management"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "customers" ? "active" : "")" 
+                               href="#" @onclick:preventDefault @onclick='() => SelectTab("customers")'>
+                                👨‍👩‍👧‍👦 @T("Klanten", "Customers")
+                            </a>
+                        </li>
+                    }
                     @if (visibleSections.Contains("gdpr_tools"))
                     {
                         <li class="nav-item">
@@ -111,6 +147,26 @@
                     @if (activeTab == "staff" && visibleSections.Contains("staff_management"))
                     {
                         <StaffManagement Rank="CurrentUserRank" />
+                    }
+
+                    @if (activeTab == "accommodations" && visibleSections.Contains("accommodations_management"))
+                    {
+                        <AccommodationsManagement />
+                    }
+
+                    @if (activeTab == "pricing" && visibleSections.Contains("pricing_management"))
+                    {
+                        <PricingManagement />
+                    }
+
+                    @if (activeTab == "reservations" && visibleSections.Contains("reservations_management"))
+                    {
+                        <ReservationManagement />
+                    }
+
+                    @if (activeTab == "customers" && visibleSections.Contains("customers_management"))
+                    {
+                        <CustomerManagement />
                     }
 
                     @if (activeTab == "gdpr" && visibleSections.Contains("gdpr_tools"))

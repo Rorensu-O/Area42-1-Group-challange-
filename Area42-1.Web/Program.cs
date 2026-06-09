@@ -23,10 +23,13 @@ builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
 
 builder.Services.AddOutputCache();
 
-// HTTP client for API communication
+// Configure HTTP client for Area42 API
+// AddServiceDefaults() already includes service discovery via HttpClient defaults
 builder.Services.AddHttpClient("Area42API", client =>
 {
-    var apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7001";
+    // When Aspire resolves this, it will use the service name "apiservice"
+    // In local development, appsettings.Development.json will override this
+    var apiUrl = builder.Configuration["ApiUrl"] ?? "http://apiservice";
     client.BaseAddress = new Uri(apiUrl);
 });
 

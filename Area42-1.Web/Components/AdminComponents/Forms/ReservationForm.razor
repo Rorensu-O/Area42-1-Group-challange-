@@ -1,0 +1,193 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject ILogger<ReservationForm> Logger
+
+<div style="background: white; padding: 2rem; border-radius: 8px;">
+    <h3>@(IsEditMode ? T("Reservering Wijzigen", "Edit Reservation") : T("Nieuwe Reservering", "New Reservation"))</h3>
+
+    <EditForm Model="FormData" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Gastnaam", "Guest Name") *</label>
+                    <InputText class="form-control" @bind-Value="FormData.GuestName" />
+                    <ValidationMessage For="() => FormData.GuestName" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Email", "Email") *</label>
+                    <InputText class="form-control" @bind-Value="FormData.GuestEmail" type="email" />
+                    <ValidationMessage For="() => FormData.GuestEmail" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Telefoon", "Phone")</label>
+            <InputText class="form-control" @bind-Value="FormData.GuestPhone" placeholder="+31..." />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Check-in", "Check-In Date") *</label>
+                    <InputDate class="form-control" @bind-Value="FormData.CheckInDate" />
+                    <ValidationMessage For="() => FormData.CheckInDate" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Check-out", "Check-Out Date") *</label>
+                    <InputDate class="form-control" @bind-Value="FormData.CheckOutDate" />
+                    <ValidationMessage For="() => FormData.CheckOutDate" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Accommodatie", "Accommodation") *</label>
+            <InputSelect class="form-control" @bind-Value="FormData.AccommodationId">
+                <option value="">-- @T("Selecteer accommodatie", "Select accommodation") --</option>
+                <option value="acc1">Beachfront Villa</option>
+                <option value="acc2">Mountain Cottage</option>
+                <option value="acc3">City Apartment</option>
+            </InputSelect>
+            <ValidationMessage For="() => FormData.AccommodationId" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Gasten", "Guests") *</label>
+                    <InputNumber class="form-control" @bind-Value="FormData.NumberOfGuests" min="1" max="20" />
+                    <ValidationMessage For="() => FormData.NumberOfGuests" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Totaalprijs (€)", "Total Price (€)") *</label>
+                    <InputNumber class="form-control" @bind-Value="FormData.TotalPrice" min="0.01" step="0.01" />
+                    <ValidationMessage For="() => FormData.TotalPrice" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Speciale verzoeken", "Special Requests")</label>
+            <InputTextArea class="form-control" @bind-Value="FormData.SpecialRequests" 
+                          placeholder="@T("bijv. hoog verdieping, kinderzitje, etc.", "e.g., high floor, car seat, etc.")" rows="3" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Status", "Status") *</label>
+            <InputSelect class="form-control" @bind-Value="FormData.Status">
+                <option value="Pending">@T("In afwachting", "Pending")</option>
+                <option value="Confirmed">@T("Bevestigd", "Confirmed")</option>
+                <option value="Cancelled">@T("Geannuleerd", "Cancelled")</option>
+                <option value="Completed">@T("Voltooid", "Completed")</option>
+            </InputSelect>
+            <ValidationMessage For="() => FormData.Status" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>❌ @T("Fout", "Error"):</strong> @ErrorMessage
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+                @if (IsSubmitting)
+                {
+                    <span>⏳ @T("Opslaan...", "Saving...")</span>
+                }
+                else
+                {
+                    <span>💾 @(IsEditMode ? T("Update", "Update") : T("Aanmaken", "Create"))</span>
+                }
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="OnCancel" disabled="@IsSubmitting">
+                @T("Annuleren", "Cancel")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private class ReservationFormModel
+    {
+        public string GuestName { get; set; } = string.Empty;
+        public string GuestEmail { get; set; } = string.Empty;
+        public string GuestPhone { get; set; } = string.Empty;
+        public DateTime CheckInDate { get; set; } = DateTime.Now.AddDays(1);
+        public DateTime CheckOutDate { get; set; } = DateTime.Now.AddDays(8);
+        public string AccommodationId { get; set; } = string.Empty;
+        public int NumberOfGuests { get; set; } = 2;
+        public decimal TotalPrice { get; set; }
+        public string SpecialRequests { get; set; } = string.Empty;
+        public string Status { get; set; } = "Confirmed";
+    }
+
+    [Parameter]
+    public EventCallback<ReservationData> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private ReservationFormModel FormData = new();
+    private bool IsEditMode = false;
+    private bool IsSubmitting = false;
+    private string? ErrorMessage;
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            IsSubmitting = true;
+            ErrorMessage = null;
+
+            var reservation = new ReservationData
+            {
+                GuestName = FormData.GuestName,
+                GuestEmail = FormData.GuestEmail,
+                GuestPhone = FormData.GuestPhone,
+                CheckInDate = FormData.CheckInDate,
+                CheckOutDate = FormData.CheckOutDate,
+                AccommodationId = FormData.AccommodationId,
+                NumberOfGuests = FormData.NumberOfGuests,
+                TotalPrice = FormData.TotalPrice,
+                SpecialRequests = FormData.SpecialRequests,
+                Status = FormData.Status
+            };
+
+            await OnSave.InvokeAsync(reservation);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving reservation");
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    public class ReservationData
+    {
+        public string GuestName { get; set; } = string.Empty;
+        public string GuestEmail { get; set; } = string.Empty;
+        public string GuestPhone { get; set; } = string.Empty;
+        public DateTime CheckInDate { get; set; }
+        public DateTime CheckOutDate { get; set; }
+        public string AccommodationId { get; set; } = string.Empty;
+        public int NumberOfGuests { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string SpecialRequests { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+}

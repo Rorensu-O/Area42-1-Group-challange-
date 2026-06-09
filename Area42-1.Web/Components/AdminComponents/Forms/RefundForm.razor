@@ -1,0 +1,178 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject ILogger<RefundForm> Logger
+
+<div style="background: white; padding: 2rem; border-radius: 8px;">
+    <h3>@T("Terugbetaling Verwerken", "Process Refund")</h3>
+
+    <EditForm Model="FormData" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="form-group mb-3">
+            <label>@T("Klant", "Customer") *</label>
+            <InputText class="form-control" @bind-Value="FormData.CustomerName" disabled />
+            <small class="form-text text-muted">@FormData.CustomerEmail</small>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Bron", "Source") *</label>
+            <InputSelect class="form-control" @bind-Value="FormData.RefundSource">
+                <option value="Reservation">Reservering</option>
+                <option value="Cancellation">Annulering</option>
+                <option value="Complaint">Klacht/Vergoeding</option>
+                <option value="Other">Overig</option>
+            </InputSelect>
+            <ValidationMessage For="() => FormData.RefundSource" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Bedrag (€)", "Amount (€)") *</label>
+                    <InputNumber class="form-control" @bind-Value="FormData.Amount" min="0.01" step="0.01" />
+                    <ValidationMessage For="() => FormData.Amount" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Terugbetalingsmethode", "Refund Method") *</label>
+                    <InputSelect class="form-control" @bind-Value="FormData.RefundMethod">
+                        <option value="">-- @T("Selecteer", "Select") --</option>
+                        <option value="OriginalPayment">@T("Terug naar originele betaling", "Back to original payment")</option>
+                        <option value="CreditNote">@T("Creditnota", "Credit note")</option>
+                        <option value="BankTransfer">@T("Bankoverschrijving", "Bank transfer")</option>
+                    </InputSelect>
+                    <ValidationMessage For="() => FormData.RefundMethod" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Reden", "Reason") *</label>
+            <InputTextArea class="form-control" @bind-Value="FormData.Reason" 
+                          placeholder="@T("Beschrijf de reden voor de terugbetaling...", "Describe the reason for refund...")" rows="4" />
+            <ValidationMessage For="() => FormData.Reason" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-check-label">
+                <InputCheckbox @bind-Value="FormData.RequiresApproval" class="form-check-input" />
+                <span style="margin-left: 0.5rem;">@T("Goedkeuring vereist (bedrag > €500)", "Requires approval (amount > €500)")</span>
+            </label>
+            @if (FormData.RequiresApproval)
+            {
+                <small style="color: #dc3545; display: block; margin-top: 0.5rem;">
+                    ⚠️ @T("Deze terugbetaling moet worden goedgekeurd door een senior manager", "This refund must be approved by a senior manager")
+                </small>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>❌ @T("Fout", "Error"):</strong> @ErrorMessage
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+                @if (IsSubmitting)
+                {
+                    <span>⏳ @T("Verwerken...", "Processing...")</span>
+                }
+                else
+                {
+                    <span>💳 @T("Terugbetaling verwerken", "Process Refund")</span>
+                }
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="OnCancel" disabled="@IsSubmitting">
+                @T("Annuleren", "Cancel")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private class RefundFormModel
+    {
+        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerEmail { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string RefundSource { get; set; } = "Reservation";
+        public string RefundMethod { get; set; } = "OriginalPayment";
+        public string Reason { get; set; } = string.Empty;
+        public bool RequiresApproval { get; set; }
+    }
+
+    public class RefundRequest
+    {
+        public string CustomerId { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string RefundSource { get; set; } = string.Empty;
+        public string RefundMethod { get; set; } = string.Empty;
+        public string Reason { get; set; } = string.Empty;
+        public bool RequiresApproval { get; set; }
+        public DateTime ProcessedAt { get; set; }
+    }
+
+    [Parameter]
+    public string CustomerId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string CustomerName { get; set; } = string.Empty;
+
+    [Parameter]
+    public string CustomerEmail { get; set; } = string.Empty;
+
+    [Parameter]
+    public decimal InitialAmount { get; set; }
+
+    [Parameter]
+    public EventCallback<RefundRequest> OnSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private RefundFormModel FormData = new();
+    private bool IsSubmitting = false;
+    private string? ErrorMessage;
+
+    protected override void OnInitialized()
+    {
+        FormData.CustomerName = CustomerName;
+        FormData.CustomerEmail = CustomerEmail;
+        FormData.Amount = InitialAmount;
+        FormData.RequiresApproval = InitialAmount > 500;
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            IsSubmitting = true;
+            ErrorMessage = null;
+
+            var refundRequest = new RefundRequest
+            {
+                CustomerId = CustomerId,
+                Amount = FormData.Amount,
+                RefundSource = FormData.RefundSource,
+                RefundMethod = FormData.RefundMethod,
+                Reason = FormData.Reason,
+                RequiresApproval = FormData.RequiresApproval,
+                ProcessedAt = DateTime.UtcNow
+            };
+
+            await OnSubmit.InvokeAsync(refundRequest);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error processing refund");
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+}

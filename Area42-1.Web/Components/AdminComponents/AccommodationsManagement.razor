@@ -1,0 +1,167 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject AccommodationApiClient AccommodationClient
+@inject ILogger<AccommodationsManagement> Logger
+
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2 style="margin: 0;">@T("Accommodaties Beheer", "Accommodations Management")</h2>
+            <small style="color: #666;">@T("Beheer alle vakantiewoningen", "Manage all holiday properties")</small>
+        </div>
+        <button class="btn btn-primary" @onclick="ShowAddModal" disabled>
+            ➕ @T("Nieuwe accommodatie", "Add Accommodation")
+        </button>
+    </div>
+
+    <!-- Filters & Search -->
+    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <input type="text" class="form-control" style="flex: 1; min-width: 200px;" placeholder="@T("Zoek accommodatie...", "Search accommodation...")" 
+               @bind="searchTerm" @bind:event="oninput" />
+        <select class="form-control" style="width: 200px;" @bind="filterType">
+            <option value="">@T("Alle types", "All types")</option>
+            <option value="Chalet">Chalet</option>
+            <option value="Villa">Villa</option>
+            <option value="Bungalow">Bungalow</option>
+            <option value="Cottage">Cottage</option>
+            <option value="Apartment">Apartment</option>
+        </select>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <input type="checkbox" @bind="showOnlyActive" />
+            @T("Alleen actief", "Active only")
+        </label>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading)
+    {
+        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center;">
+            <p>@T("Accommodaties laden...", "Loading accommodations...")</p>
+        </div>
+    }
+    else if (accommodations == null || accommodations.Count == 0)
+    {
+        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; color: #999;">
+            <p>@T("Geen accommodaties gevonden", "No accommodations found")</p>
+        </div>
+    }
+    else
+    {
+        <!-- Accommodations Table -->
+        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left;">@T("Naam", "Name")</th>
+                        <th style="padding: 1rem; text-align: left;">@T("Type", "Type")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Gasten", "Guests")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Slaapkamers", "Bedrooms")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Badkamers", "Bathrooms")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Status", "Status")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Acties", "Actions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var accommodation in GetFilteredAccommodations())
+                    {
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 1rem; font-weight: 500;">@accommodation.Name</td>
+                            <td style="padding: 1rem;">
+                                <span style="background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                                    @accommodation.Type
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">👥 @accommodation.MaxGuests</td>
+                            <td style="padding: 1rem; text-align: center;">🛏️ @accommodation.Bedrooms</td>
+                            <td style="padding: 1rem; text-align: center;">🚿 @accommodation.Bathrooms</td>
+                            <td style="padding: 1rem; text-align: center;">
+                                @if (accommodation.IsActive)
+                                {
+                                    <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                                        ✅ @T("Actief", "Active")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                                        ❌ @T("Inactief", "Inactive")
+                                    </span>
+                                }
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <button class="btn btn-sm btn-info" disabled>✏️ @T("Bewerk", "Edit")</button>
+                                <button class="btn btn-sm btn-danger" disabled>🗑️ @T("Verwijder", "Delete")</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Error/Success Messages -->
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #721c24;">
+            <strong>❌ @T("Fout", "Error"):</strong> @errorMessage
+            <button class="btn btn-sm btn-link" @onclick="() => errorMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #155724;">
+            <strong>✅ @T("Succes", "Success"):</strong> @successMessage
+            <button class="btn btn-sm btn-link" @onclick="() => successMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<AccommodationDto> accommodations = new();
+    private bool isLoading = true;
+    private string searchTerm = "";
+    private string filterType = "";
+    private bool showOnlyActive = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccommodations();
+    }
+
+    private async Task LoadAccommodations()
+    {
+        try
+        {
+            isLoading = true;
+            accommodations = await AccommodationClient.GetAllAsync() ?? new List<AccommodationDto>();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading accommodations");
+            errorMessage = "Fout bij laden van accommodaties";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<AccommodationDto> GetFilteredAccommodations()
+    {
+        return accommodations
+            .Where(a => string.IsNullOrEmpty(searchTerm) || 
+                   a.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                   a.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(a => string.IsNullOrEmpty(filterType) || a.Type == filterType)
+            .Where(a => !showOnlyActive || a.IsActive)
+            .ToList();
+    }
+
+    private void ShowAddModal()
+    {
+        Logger.LogInformation("Add new accommodation modal would show here");
+    }
+}

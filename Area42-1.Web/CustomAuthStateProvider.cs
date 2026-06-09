@@ -42,18 +42,23 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         }
     }
 
-    public async Task LoginAsync(string token)
+    public async Task LoginAsync(string token, bool isAdmin = false, string? userRank = null)
     {
         await SaveTokenToStorageAsync(token);
 
         // Parse token to check if admin
         var claims = ParseClaimsFromToken(token);
-        var isAdmin = claims.Any(c => c.Type == "userType" && c.Value == "Admin") ||
-                     claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
+        var detectedAdmin = isAdmin || claims.Any(c => c.Type == "userType" && c.Value == "Admin") ||
+                     claims.Any(c => c.Type == "isAdmin" && c.Value == "true") ||
+                     claims.Any(c => c.Type == "rank" != null);
 
-        if (isAdmin)
+        if (detectedAdmin || isAdmin)
         {
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", AdminFlagKey, "true");
+            if (!string.IsNullOrEmpty(userRank))
+            {
+                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "user_rank", userRank);
+            }
         }
 
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());

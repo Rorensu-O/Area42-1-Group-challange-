@@ -183,29 +183,34 @@ public class AdminAuthorizationService
             AdminRank.SuperAdmin => new[] {
                 "overview", "kpis", "booking_stats", "revenue", "security_flags",
                 "audit_logs", "kill_switch", "staff_management", "financial_reports",
-                "gdpr_tools", "security_dashboard"
+                "gdpr_tools", "security_dashboard", "accommodations_management", 
+                "pricing_management", "reservations_management", "customers_management"
             },
 
             AdminRank.Admin => new[] {
                 "overview", "kpis", "booking_stats", "revenue", "security_flags",
-                "audit_logs", "kill_switch", "staff_management", "gdpr_tools"
+                "audit_logs", "kill_switch", "staff_management", "gdpr_tools",
+                "accommodations_management", "pricing_management", 
+                "reservations_management", "customers_management"
             },
 
             AdminRank.SeniorManager => new[] {
                 "overview", "kpis", "booking_stats", "revenue", "financial_reports",
-                "staff_management"
+                "staff_management", "accommodations_management", "pricing_management",
+                "reservations_management"
             },
 
             AdminRank.PropertyManager => new[] {
-                "overview", "kpis", "properties"
+                "overview", "kpis", "properties", "accommodations_management", 
+                "pricing_management", "reservations_management"
             },
 
             AdminRank.BookingManager => new[] {
-                "overview", "kpis", "bookings", "booking_stats"
+                "overview", "kpis", "bookings", "booking_stats", "reservations_management"
             },
 
             AdminRank.CustomerSupport => new[] {
-                "overview", "bookings_readonly", "support_inbox"
+                "overview", "bookings_readonly", "support_inbox", "customers_management"
             },
 
             AdminRank.SeniorIntern => new[] {

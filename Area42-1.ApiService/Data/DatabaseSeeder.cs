@@ -69,7 +69,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "superadmin@area42.nl",
+                Email = "j.devries@area42.nl",
                 FullName = "Jan de Vries",
                 PasswordHash = HashPassword("SuperAdmin@123"),
                 Rank = AdminRank.SuperAdmin,
@@ -87,7 +87,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "admin1@area42.nl",
+                Email = "m.garcia@area42.nl",
                 FullName = "Maria García",
                 PasswordHash = HashPassword("Admin@123"),
                 Rank = AdminRank.Admin,
@@ -105,7 +105,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "admin2@area42.nl",
+                Email = "p.muller@area42.nl",
                 FullName = "Peter Müller",
                 PasswordHash = HashPassword("Admin@456"),
                 Rank = AdminRank.Admin,
@@ -123,7 +123,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "seniormanager@area42.nl",
+                Email = "a.lemmens@area42.nl",
                 FullName = "Anne Lemmens",
                 PasswordHash = HashPassword("Manager@789"),
                 Rank = AdminRank.SeniorManager,
@@ -145,7 +145,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "propertymanager@area42.nl",
+                Email = "e.deboer@area42.nl",
                 FullName = "Emma de Boer",
                 PasswordHash = HashPassword("Property@111"),
                 Rank = AdminRank.PropertyManager,
@@ -163,7 +163,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "bookingmanager@area42.nl",
+                Email = "t.vandenberg@area42.nl",
                 FullName = "Thomas van den Berg",
                 PasswordHash = HashPassword("Booking@222"),
                 Rank = AdminRank.BookingManager,
@@ -181,7 +181,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "support@area42.nl",
+                Email = "l.jansen@area42.nl",
                 FullName = "Lisa Jansen",
                 PasswordHash = HashPassword("Support@333"),
                 Rank = AdminRank.CustomerSupport,
@@ -203,7 +203,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "seniorintern@area42.nl",
+                Email = "d.vermeulen@area42.nl",
                 FullName = "David Vermeulen",
                 PasswordHash = HashPassword("Senior@444"),
                 Rank = AdminRank.SeniorIntern,
@@ -222,7 +222,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "intern@area42.nl",
+                Email = "s.hendrickx@area42.nl",
                 FullName = "Sophie Hendrickx",
                 PasswordHash = HashPassword("Intern@555"),
                 Rank = AdminRank.Intern,
@@ -241,7 +241,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "internAdmin@area42.nl",
+                Email = "m.dejong@area42.nl",
                 FullName = "Marcus de Jong",
                 PasswordHash = HashPassword("InternAdmin@666"),
                 Rank = AdminRank.InternAdmin,
@@ -264,7 +264,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "hrmanager@area42.nl",
+                Email = "s.kramer@area42.nl",
                 FullName = "Sophia Kramer",
                 PasswordHash = HashPassword("HRManager@444"),
                 Rank = null,
@@ -282,7 +282,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "hremployee@area42.nl",
+                Email = "n.vandorp@area42.nl",
                 FullName = "Nicole van Dorp",
                 PasswordHash = HashPassword("HREmployee@777"),
                 Rank = null,
@@ -300,7 +300,7 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "hrintern@area42.nl",
+                Email = "l.vanacker@area42.nl",
                 FullName = "Lucas van Acker",
                 PasswordHash = HashPassword("HRIntern@888"),
                 Rank = null,
@@ -323,8 +323,8 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "disabled@area42.nl",
-                FullName = "Inactive Admin",
+                Email = "r.vanroyen@area42.nl",
+                FullName = "Robert van Royen",
                 PasswordHash = HashPassword("Disabled@999"),
                 Rank = AdminRank.Admin,
                 HRRank = null,
@@ -341,8 +341,8 @@ public static class DatabaseSeeder
             new AdminUser
             {
                 Id = Guid.NewGuid().ToString(),
-                Email = "locked@area42.nl",
-                FullName = "Locked Admin",
+                Email = "f.scholten@area42.nl",
+                FullName = "Frits Scholten",
                 PasswordHash = HashPassword("Locked@999"),
                 Rank = AdminRank.PropertyManager,
                 HRRank = null,

@@ -6,56 +6,112 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Authorization
+@using Area42_1.Web.Services
 
 <PageTitle>@T("Inloggen - Area42", "Login - Area42")</PageTitle>
 
-<div style="max-width: 400px; margin: 3rem auto; padding: 0 1rem;">
-    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 2rem; background: white;">
-        <h2 style="text-align: center; margin-bottom: 2rem;">@T("Inloggen", "Login")</h2>
+<div style="max-width: 450px; margin: 3rem auto; padding: 0 1rem;">
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 2rem; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="text-align: center; margin-bottom: 1rem;">@T("Area42 Inloggen", "Area42 Login")</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 2rem; font-size: 14px;">
+            @T("Admin of klant - gebruik dezelfde inloggegevens", "Admin or customer - use the same credentials")
+        </p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
             <div style="background-color: #fee; color: #c33; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #fcc;">
-                @_errorMessage
+                <strong>❌ @T("Fout", "Error"):</strong> @_errorMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <div style="background-color: #efe; color: #3c3; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #cfc;">
+                <strong>✅ @T("Succes", "Success"):</strong> @_successMessage
             </div>
         }
 
         <form @onsubmit="HandleLogin">
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">@T("E-mail", "Email")</label>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    @T("E-mailadres", "Email Address") *
+                </label>
                 <input type="email" 
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" 
-                       placeholder="@T("jouw@email.com", "your@email.com")"
+                       style="@GetEmailBorderStyle()"
+                       placeholder="@T("naam@voorbeeld.nl", "name@example.com")"
                        @bind="_email"
-                       disabled="@_isLoading" />
+                       disabled="@_isLoading" 
+                       required />
+                @if (!string.IsNullOrEmpty(_emailError))
+                {
+                    <small style="color: #c33;">@_emailError</small>
+                }
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">@T("Wachtwoord", "Password")</label>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    @T("Wachtwoord", "Password") *
+                </label>
                 <input type="password" 
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" 
+                       style="@GetPasswordBorderStyle()"
                        placeholder="••••••••"
                        @bind="_password"
-                       disabled="@_isLoading" />
+                       disabled="@_isLoading"
+                       required />
+                @if (!string.IsNullOrEmpty(_passwordError))
+                {
+                    <small style="color: #c33;">@_passwordError</small>
+                }
             </div>
+
+            @if (!string.IsNullOrEmpty(_detectedAccountType))
+            {
+                <div style="background: #f0f7ff; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; border-left: 4px solid #003580;">
+                    <small style="color: #003580;">
+                        @if (_detectedAccountType == "Admin")
+                        {
+                            <strong>👤 @T("Admin-account gedetecteerd", "Admin account detected")</strong><br/>
+                            @T("U wordt doorgestuurd naar het admin-dashboard", "You will be redirected to the admin dashboard")
+                        }
+                        else
+                        {
+                            <strong>🏠 @T("Klant-account gedetecteerd", "Customer account detected")</strong><br/>
+                            @T("U wordt doorgestuurd naar uw reserveringen", "You will be redirected to your reservations")
+                        }
+                    </small>
+                </div>
+            }
 
             <button type="submit" 
                     disabled="@_isLoading"
-                    style="width: 100%; background: #003580; color: white; padding: 0.75rem; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; opacity: @(_isLoading ? "0.6" : "1");">
+                    style="width: 100%; background: #003580; color: white; padding: 0.75rem; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; opacity: @(_isLoading ? "0.6" : "1"); transition: all 0.3s ease;">
                 @if (_isLoading)
                 {
-                    <span>@T("Bezig met inloggen...", "Logging in...")</span>
+                    <span>⏳ @T("Bezig met inloggen...", "Logging in...")</span>
                 }
                 else
                 {
-                    <span>@T("Inloggen", "Login")</span>
+                    <span>🔓 @T("Inloggen", "Login")</span>
                 }
             </button>
         </form>
 
-        <p style="text-align: center; margin-top: 1.5rem;">
-            @T("Nog geen account?", "Don't have an account?") <a href="/register" style="color: #003580; text-decoration: none;">@T("Registreer hier", "Register here")</a>
-        </p>
+        <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+            <p style="text-align: center; color: #666; margin: 0.75rem 0;">
+                @T("Nog geen account?", "Don't have an account?") 
+                <a href="/register" style="color: #003580; text-decoration: none; font-weight: 600;">@T("Registreer hier", "Register here")</a>
+            </p>
+            <p style="text-align: center; color: #666; margin: 0.75rem 0;">
+                @T("Wachtwoord vergeten?", "Forgot password?") 
+                <a href="/forgot-password" style="color: #003580; text-decoration: none; font-weight: 600;">@T("Reset hier", "Reset here")</a>
+            </p>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: #f9f9f9; border-radius: 4px;">
+            <small style="color: #999; display: block; line-height: 1.5;">
+                💡 @T("Tip: Admin-accounts gebruiken e-mailadressen die eindigen op @area42.nl", "Tip: Admin accounts use email addresses ending with @area42.nl")
+            </small>
+        </div>
     </div>
 </div>
 
@@ -63,6 +119,10 @@
     private string _email = string.Empty;
     private string _password = string.Empty;
     private string _errorMessage = string.Empty;
+    private string _successMessage = string.Empty;
+    private string? _detectedAccountType = null;
+    private string? _emailError = null;
+    private string? _passwordError = null;
     private bool _isLoading = false;
 
     protected override async Task OnInitializedAsync()
@@ -71,62 +131,114 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (authState?.User?.Identity?.IsAuthenticated == true)
         {
-            var isAdmin = authState.User.Claims.Any(c => (c.Type == "userType" && c.Value == "Admin") || 
-                                                           (c.Type == "isAdmin" && c.Value == "true"));
+            var isAdmin = authState.User.Claims.Any(c => 
+                (c.Type == "userType" && c.Value == "Admin") || 
+                (c.Type == "isAdmin" && c.Value == "true") ||
+                (c.Type == "rank" != null));
 
-            Navigation.NavigateTo(isAdmin ? "/admin" : "/");
+            Navigation.NavigateTo(isAdmin ? "/admin-dashboard" : "/reservations");
         }
     }
 
     private async Task HandleLogin()
     {
+        // Reset messages
         _errorMessage = string.Empty;
+        _successMessage = string.Empty;
+        _emailError = null;
+        _passwordError = null;
+        _detectedAccountType = null;
+
+        // Validate inputs
+        if (string.IsNullOrWhiteSpace(_email))
+        {
+            _emailError = T("E-mailadres is verplicht", "Email address is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_password))
+        {
+            _passwordError = T("Wachtwoord is verplicht", "Password is required");
+            return;
+        }
+
         _isLoading = true;
 
         try
         {
+            // Detect account type based on email
+            _detectedAccountType = _email.EndsWith("@area42.nl", StringComparison.OrdinalIgnoreCase) 
+                ? "Admin" 
+                : "Customer";
+
             var loginRequest = new { email = _email, password = _password };
 
-            var response = await Http.PostAsJsonAsync("http://localhost:5214/api/auth/login", loginRequest);
+            // Call login API (the API determines account type internally)
+            var httpClient = Http;
+            var response = await httpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
 
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<LoginResponse>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var result = JsonSerializer.Deserialize<LoginResponse>(content, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (result?.Success == true && !string.IsNullOrEmpty(result.Token))
                 {
-                    // Store token and authenticate
-                    await AuthStateProvider.LoginAsync(result.Token);
+                    _successMessage = _detectedAccountType == "Admin" 
+                        ? T("Admin-inloggen succesvol", "Admin login successful")
+                        : T("Inloggen succesvol", "Login successful");
 
-                    // Route based on user type
-                    if (result.IsAdmin)
-                    {
-                        Navigation.NavigateTo("/admin");
-                    }
-                    else
-                    {
-                        Navigation.NavigateTo("/");
-                    }
+                    // Store token with account type
+                    await AuthStateProvider.LoginAsync(result.Token, result.IsAdmin, result.UserRank);
+
+                    // Redirect based on account type
+                    var redirectUrl = result.IsAdmin ? "/admin-dashboard" : "/reservations";
+
+                    // Small delay to show success message
+                    await Task.Delay(500);
+
+                    Navigation.NavigateTo(redirectUrl);
                 }
                 else
                 {
-                    _errorMessage = result?.Message ?? T("Inloggen mislukt", "Login failed");
+                    _errorMessage = result?.Message ?? T("Login mislukt", "Login failed");
                 }
             }
             else
             {
-                _errorMessage = T("Inloggen mislukt. Controleer uw gegevens.", "Login failed. Please check your credentials.");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    var errorResult = JsonSerializer.Deserialize<LoginResponse>(errorContent, 
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    _errorMessage = errorResult?.Message ?? T("Ongeldige inloggegevens", "Invalid credentials");
+                }
+                catch
+                {
+                    _errorMessage = T("Inloggen mislukt. Controleer uw inloggegevens.", "Login failed. Please check your credentials.");
+                }
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Error: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"Login error: {ex.Message}");
+            _errorMessage = T("Er is een fout opgetreden. Probeer later opnieuw.", "An error occurred. Please try again later.");
         }
         finally
         {
             _isLoading = false;
         }
+    }
+
+    private string GetEmailBorderStyle()
+    {
+        return $"width: 100%; padding: 0.75rem; border: 1px solid {(!string.IsNullOrEmpty(_emailError) ? "#c33" : "#ddd")}; border-radius: 4px; box-sizing: border-box;";
+    }
+
+    private string GetPasswordBorderStyle()
+    {
+        return $"width: 100%; padding: 0.75rem; border: 1px solid {(!string.IsNullOrEmpty(_passwordError) ? "#c33" : "#ddd")}; border-radius: 4px; box-sizing: border-box;";
     }
 
     public class LoginResponse

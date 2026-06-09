@@ -1,0 +1,209 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject ILogger<PricingManagement> Logger
+
+<div style="background: white; padding: 2rem; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h3 style="margin: 0;">@T("Prijsbeheer", "Pricing Management")</h3>
+            <small style="color: #666;">@T("Beheer accommodatieprijzen en seizoenskorting", "Manage accommodation prices and seasonal rates")</small>
+        </div>
+        <button class="btn btn-primary btn-sm" @onclick="ShowAddPricingRule" disabled>
+            ➕ @T("Nieuw tarief", "Add Rate")
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <input type="text" class="form-control" style="flex: 1; min-width: 200px;" 
+               placeholder="@T("Zoek accommodatie...", "Search accommodation...")" 
+               @bind="searchTerm" @bind:event="oninput" />
+        <select class="form-control" style="width: 200px;" @bind="selectedPricingType">
+            <option value="">@T("Alle prijstypes", "All price types")</option>
+            <option value="BasePrice">@T("Basisprijs", "Base Price")</option>
+            <option value="Seasonal">@T("Seizoensprijs", "Seasonal")</option>
+            <option value="WeekendRate">@T("Weekend tarief", "Weekend Rate")</option>
+            <option value="LongStay">@T("Langdurig tarief", "Long Stay")</option>
+        </select>
+    </div>
+
+    <!-- Pricing Rules Table -->
+    <div style="border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <table style="width: 100%; border-collapse: collapse; background: white;">
+            <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left;">@T("Accommodatie", "Accommodation")</th>
+                    <th style="padding: 1rem; text-align: left;">@T("Prijstype", "Price Type")</th>
+                    <th style="padding: 1rem; text-align: right;">@T("Huidig tarief", "Current Rate")</th>
+                    <th style="padding: 1rem; text-align: right;">@T("Vorig tarief", "Previous Rate")</th>
+                    <th style="padding: 1rem; text-align: center;">@T("Verandering", "Change")</th>
+                    <th style="padding: 1rem; text-align: center;">@T("Geldig vanaf", "Valid From")</th>
+                    <th style="padding: 1rem; text-align: center;">@T("Acties", "Actions")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pricing in GetFilteredPricings())
+                {
+                    <tr style="border-bottom: 1px solid #dee2e6; hover-effect: #f8f9fa;">
+                        <td style="padding: 1rem; font-weight: 500;">@pricing.AccommodationName</td>
+                        <td style="padding: 1rem;">
+                            <span style="background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                                @pricing.PriceType
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: right; font-weight: 600;">
+                            €@pricing.CurrentRate.ToString("0.00")
+                        </td>
+                        <td style="padding: 1rem; text-align: right; color: #666;">
+                            €@pricing.PreviousRate.ToString("0.00")
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            @{
+                                var change = pricing.CurrentRate - pricing.PreviousRate;
+                                var changePercent = pricing.PreviousRate > 0 ? (change / pricing.PreviousRate * 100) : 0;
+                                var changeColor = change > 0 ? "#dc3545" : change < 0 ? "#28a745" : "#6c757d";
+                            }
+                            <span style="color: @changeColor; font-weight: 600;">
+                                @(change > 0 ? "+" : "")@change.ToString("0.00") (@changePercent.ToString("0.0")%)
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            @pricing.ValidFrom.ToString("dd/MM/yyyy")
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <button class="btn btn-sm btn-info" disabled>✏️ @T("Bewerk", "Edit")</button>
+                            <button class="btn btn-sm btn-danger" disabled>🗑️ @T("Verwijder", "Delete")</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (GetFilteredPricings().Count == 0)
+    {
+        <div style="text-align: center; padding: 2rem; color: #999;">
+            <p>@T("Geen prijsregels gevonden", "No pricing rules found")</p>
+        </div>
+    }
+
+    <!-- Bulk Actions -->
+    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+        <h5>@T("Bulkacties", "Bulk Actions")</h5>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+            <div>
+                <label>@T("Verhoog alle prijzen met %", "Increase all prices by %")</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <InputNumber @bind-Value="bulkIncreasePercent" class="form-control" style="width: 100px;" min="0" max="100" step="0.5" />
+                    <button class="btn btn-warning" disabled>@T("Toepassen", "Apply")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #155724;">
+            <strong>✅ @T("Succes", "Success"):</strong> @SuccessMessage
+            <button class="btn btn-sm btn-link" @onclick="() => SuccessMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #721c24;">
+            <strong>❌ @T("Fout", "Error"):</strong> @ErrorMessage
+            <button class="btn btn-sm btn-link" @onclick="() => ErrorMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<PricingRule> pricingRules = new();
+    private string searchTerm = "";
+    private string selectedPricingType = "";
+    private decimal bulkIncreasePercent = 0;
+    private string? SuccessMessage;
+    private string? ErrorMessage;
+
+    protected override void OnInitialized()
+    {
+        LoadMockData();
+    }
+
+    private void LoadMockData()
+    {
+        pricingRules = new List<PricingRule>
+        {
+            new PricingRule 
+            { 
+                Id = Guid.NewGuid(),
+                AccommodationName = "Beachfront Villa",
+                PriceType = "BasePrice",
+                CurrentRate = 250.00m,
+                PreviousRate = 220.00m,
+                ValidFrom = DateTime.Now
+            },
+            new PricingRule 
+            { 
+                Id = Guid.NewGuid(),
+                AccommodationName = "Beachfront Villa",
+                PriceType = "Seasonal",
+                CurrentRate = 350.00m,
+                PreviousRate = 300.00m,
+                ValidFrom = new DateTime(2024, 6, 1)
+            },
+            new PricingRule 
+            { 
+                Id = Guid.NewGuid(),
+                AccommodationName = "Mountain Cottage",
+                PriceType = "BasePrice",
+                CurrentRate = 150.00m,
+                PreviousRate = 150.00m,
+                ValidFrom = DateTime.Now
+            },
+            new PricingRule 
+            { 
+                Id = Guid.NewGuid(),
+                AccommodationName = "Mountain Cottage",
+                PriceType = "WeekendRate",
+                CurrentRate = 180.00m,
+                PreviousRate = 160.00m,
+                ValidFrom = DateTime.Now
+            },
+            new PricingRule 
+            { 
+                Id = Guid.NewGuid(),
+                AccommodationName = "City Apartment",
+                PriceType = "LongStay",
+                CurrentRate = 120.00m,
+                PreviousRate = 130.00m,
+                ValidFrom = DateTime.Now
+            }
+        };
+    }
+
+    private List<PricingRule> GetFilteredPricings()
+    {
+        return pricingRules
+            .Where(p => string.IsNullOrEmpty(searchTerm) || 
+                   p.AccommodationName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(p => string.IsNullOrEmpty(selectedPricingType) || p.PriceType == selectedPricingType)
+            .ToList();
+    }
+
+    private void ShowAddPricingRule()
+    {
+        Logger.LogInformation("Add pricing rule modal would show here");
+    }
+
+    public class PricingRule
+    {
+        public Guid Id { get; set; }
+        public string AccommodationName { get; set; } = string.Empty;
+        public string PriceType { get; set; } = string.Empty;
+        public decimal CurrentRate { get; set; }
+        public decimal PreviousRate { get; set; }
+        public DateTime ValidFrom { get; set; }
+    }
+}

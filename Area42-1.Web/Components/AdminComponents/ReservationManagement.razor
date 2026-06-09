@@ -1,0 +1,265 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject ILogger<ReservationManagement> Logger
+
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2 style="margin: 0;">@T("Reserveringsbeheer", "Reservation Management")</h2>
+            <small style="color: #666;">@T("Alle reserveringen beheren en wijzigen", "Manage and modify all reservations")</small>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <input type="text" class="form-control" style="flex: 1; min-width: 200px;" 
+               placeholder="@T("Zoek op gastnaam of email...", "Search by guest name or email...")" 
+               @bind="searchTerm" @bind:event="oninput" />
+        <select class="form-control" style="width: 200px;" @bind="filterStatus">
+            <option value="">@T("Alle statussen", "All statuses")</option>
+            <option value="Confirmed">@T("Bevestigd", "Confirmed")</option>
+            <option value="Pending">@T("In afwachting", "Pending")</option>
+            <option value="Cancelled">@T("Geannuleerd", "Cancelled")</option>
+            <option value="Completed">@T("Voltooid", "Completed")</option>
+        </select>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <input type="checkbox" @bind="showUpcomingOnly" />
+            @T("Komende alleen", "Upcoming only")
+        </label>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading)
+    {
+        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center;">
+            <p>@T("Reserveringen laden...", "Loading reservations...")</p>
+        </div>
+    }
+    else if (reservations == null || reservations.Count == 0)
+    {
+        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; color: #999;">
+            <p>@T("Geen reserveringen gevonden", "No reservations found")</p>
+        </div>
+    }
+    else
+    {
+        <!-- Reservations Table -->
+        <div style="background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <table style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+                <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left;">@T("Gasnaam", "Guest Name")</th>
+                        <th style="padding: 1rem; text-align: left;">@T("Accommodatie", "Accommodation")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Check-in", "Check-In")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Check-out", "Check-Out")</th>
+                        <th style="padding: 1rem; text-align: right;">@T("Totaal", "Total")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Status", "Status")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Acties", "Actions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reservation in GetFilteredReservations())
+                    {
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 1rem;">
+                                <div style="font-weight: 500;">@reservation.GuestName</div>
+                                <small style="color: #666;">@reservation.GuestEmail</small>
+                            </td>
+                            <td style="padding: 1rem;">@reservation.AccommodationName</td>
+                            <td style="padding: 1rem; text-align: center;">@reservation.CheckInDate.ToString("dd/MM/yyyy")</td>
+                            <td style="padding: 1rem; text-align: center;">@reservation.CheckOutDate.ToString("dd/MM/yyyy")</td>
+                            <td style="padding: 1rem; text-align: right; font-weight: 600;">
+                                €@reservation.TotalPrice.ToString("0.00")
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="@GetStatusBadgeStyle(reservation.Status)">
+                                    @GetStatusBadgeText(reservation.Status)
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <button class="btn btn-sm btn-info" @onclick="() => ShowReservationDetails(reservation)" disabled>
+                                    👁️ @T("Details", "Details")
+                                </button>
+                                @if (reservation.Status != "Cancelled")
+                                {
+                                    <button class="btn btn-sm btn-danger" @onclick="() => ShowCancelConfirm(reservation)" disabled>
+                                        ❌ @T("Annuleren", "Cancel")
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #721c24;">
+            <strong>❌ @T("Fout", "Error"):</strong> @ErrorMessage
+            <button class="btn btn-sm btn-link" @onclick="() => ErrorMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #155724;">
+            <strong>✅ @T("Succes", "Success"):</strong> @SuccessMessage
+            <button class="btn btn-sm btn-link" @onclick="() => SuccessMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ReservationItem> reservations = new();
+    private bool isLoading = true;
+    private string searchTerm = "";
+    private string filterStatus = "";
+    private bool showUpcomingOnly = false;
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+
+    protected override void OnInitialized()
+    {
+        LoadMockData();
+    }
+
+    private void LoadMockData()
+    {
+        isLoading = true;
+
+        reservations = new List<ReservationItem>
+        {
+            new ReservationItem
+            {
+                Id = Guid.NewGuid(),
+                GuestName = "John Smith",
+                GuestEmail = "john.smith@example.com",
+                AccommodationName = "Beachfront Villa",
+                CheckInDate = DateTime.Now.AddDays(5),
+                CheckOutDate = DateTime.Now.AddDays(12),
+                TotalPrice = 1750m,
+                Status = "Confirmed",
+                GuestPhone = "+31612345678",
+                SpecialRequests = "High floor preferred"
+            },
+            new ReservationItem
+            {
+                Id = Guid.NewGuid(),
+                GuestName = "Maria Garcia",
+                GuestEmail = "maria.garcia@example.com",
+                AccommodationName = "Mountain Cottage",
+                CheckInDate = DateTime.Now.AddDays(2),
+                CheckOutDate = DateTime.Now.AddDays(9),
+                TotalPrice = 1050m,
+                Status = "Confirmed",
+                GuestPhone = "+31687654321",
+                SpecialRequests = ""
+            },
+            new ReservationItem
+            {
+                Id = Guid.NewGuid(),
+                GuestName = "Hans Mueller",
+                GuestEmail = "hans.mueller@example.com",
+                AccommodationName = "City Apartment",
+                CheckInDate = DateTime.Now.AddDays(-2),
+                CheckOutDate = DateTime.Now.AddDays(3),
+                TotalPrice = 600m,
+                Status = "Completed",
+                GuestPhone = "+31698765432",
+                SpecialRequests = "Early check-in requested"
+            },
+            new ReservationItem
+            {
+                Id = Guid.NewGuid(),
+                GuestName = "Sophie Dubois",
+                GuestEmail = "sophie.dubois@example.com",
+                AccommodationName = "Beachfront Villa",
+                CheckInDate = DateTime.Now.AddDays(15),
+                CheckOutDate = DateTime.Now.AddDays(22),
+                TotalPrice = 2100m,
+                Status = "Pending",
+                GuestPhone = "+31611111111",
+                SpecialRequests = "Need crib for baby"
+            },
+            new ReservationItem
+            {
+                Id = Guid.NewGuid(),
+                GuestName = "Pieter van Dam",
+                GuestEmail = "p.vandam@example.com",
+                AccommodationName = "Mountain Cottage",
+                CheckInDate = DateTime.Now.AddDays(-10),
+                CheckOutDate = DateTime.Now.AddDays(-3),
+                TotalPrice = 900m,
+                Status = "Cancelled",
+                GuestPhone = "+31622222222",
+                SpecialRequests = ""
+            }
+        };
+
+        isLoading = false;
+    }
+
+    private List<ReservationItem> GetFilteredReservations()
+    {
+        var now = DateTime.Now;
+
+        return reservations
+            .Where(r => string.IsNullOrEmpty(searchTerm) ||
+                   r.GuestName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                   r.GuestEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(r => string.IsNullOrEmpty(filterStatus) || r.Status == filterStatus)
+            .Where(r => !showUpcomingOnly || r.CheckInDate > now)
+            .OrderByDescending(r => r.CheckInDate)
+            .ToList();
+    }
+
+    private string GetStatusBadgeStyle(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;",
+            "Pending" => "background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;",
+            "Cancelled" => "background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;",
+            "Completed" => "background: #d1ecf1; color: #0c5460; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;",
+            _ => "background: #e2e3e5; color: #383d41; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;"
+        };
+    }
+
+    private string GetStatusBadgeText(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "✅ Bevestigd",
+            "Pending" => "⏳ In afwachting",
+            "Cancelled" => "❌ Geannuleerd",
+            "Completed" => "✔️ Voltooid",
+            _ => status
+        };
+    }
+
+    private void ShowReservationDetails(ReservationItem reservation)
+    {
+        Logger.LogInformation("Would show details for reservation {Id}", reservation.Id);
+    }
+
+    private void ShowCancelConfirm(ReservationItem reservation)
+    {
+        Logger.LogInformation("Would show cancel confirmation for reservation {Id}", reservation.Id);
+    }
+
+    public class ReservationItem
+    {
+        public Guid Id { get; set; }
+        public string GuestName { get; set; } = string.Empty;
+        public string GuestEmail { get; set; } = string.Empty;
+        public string GuestPhone { get; set; } = string.Empty;
+        public string AccommodationName { get; set; } = string.Empty;
+        public DateTime CheckInDate { get; set; }
+        public DateTime CheckOutDate { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string SpecialRequests { get; set; } = string.Empty;
+    }
+}

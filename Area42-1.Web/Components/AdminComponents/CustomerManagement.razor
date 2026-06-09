@@ -1,0 +1,259 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject ILogger<CustomerManagement> Logger
+
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2 style="margin: 0;">@T("Klantenbeheer", "Customer Management")</h2>
+            <small style="color: #666;">@T("Beheer klanten, accounts en betalingen", "Manage customers, accounts and payments")</small>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <input type="text" class="form-control" style="flex: 1; min-width: 200px;" 
+               placeholder="@T("Zoek op naam of email...", "Search by name or email...")" 
+               @bind="searchTerm" @bind:event="oninput" />
+        <select class="form-control" style="width: 200px;" @bind="filterStatus">
+            <option value="">@T("Alle statussen", "All statuses")</option>
+            <option value="Active">@T("Actief", "Active")</option>
+            <option value="Suspended">@T("Geschorst", "Suspended")</option>
+            <option value="Inactive">@T("Inactief", "Inactive")</option>
+        </select>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading)
+    {
+        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center;">
+            <p>@T("Klanten laden...", "Loading customers...")</p>
+        </div>
+    }
+    else if (customers == null || customers.Count == 0)
+    {
+        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; color: #999;">
+            <p>@T("Geen klanten gevonden", "No customers found")</p>
+        </div>
+    }
+    else
+    {
+        <!-- Customers Table -->
+        <div style="background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <table style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+                <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left;">@T("Naam", "Name")</th>
+                        <th style="padding: 1rem; text-align: left;">@T("Email", "Email")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Reserveringen", "Reservations")</th>
+                        <th style="padding: 1rem; text-align: right;">@T("Totaal besteed", "Total Spent")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Status", "Status")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Lid sinds", "Member Since")</th>
+                        <th style="padding: 1rem; text-align: center;">@T("Acties", "Actions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in GetFilteredCustomers())
+                    {
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 1rem; font-weight: 500;">@customer.FullName</td>
+                            <td style="padding: 1rem;">
+                                <a href="mailto:@customer.Email" style="color: #0066cc; text-decoration: none;">
+                                    @customer.Email
+                                </a>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">@customer.TotalReservations</td>
+                            <td style="padding: 1rem; text-align: right; font-weight: 600;">
+                                €@customer.TotalSpent.ToString("0.00")
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                @{
+                                    var statusStyle = customer.Status switch
+                                    {
+                                        "Active" => "background: #d4edda; color: #155724;",
+                                        "Suspended" => "background: #f8d7da; color: #721c24;",
+                                        "Inactive" => "background: #e2e3e5; color: #383d41;",
+                                        _ => "background: #e2e3e5; color: #383d41;"
+                                    };
+                                    var statusText = customer.Status switch
+                                    {
+                                        "Active" => "✅ Actief",
+                                        "Suspended" => "🚫 Geschorst",
+                                        "Inactive" => "⚪ Inactief",
+                                        _ => customer.Status
+                                    };
+                                }
+                                <span style="@statusStyle padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;">
+                                    @statusText
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                @customer.CreatedAt.ToString("dd/MM/yyyy")
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <button class="btn btn-sm btn-info" disabled>👁️ @T("Details", "Details")</button>
+                                @if (customer.Status == "Active")
+                                {
+                                    <button class="btn btn-sm btn-warning" disabled>🚫 @T("Schorsen", "Suspend")</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-success" disabled>✅ @T("Herstellen", "Restore")</button>
+                                }
+                                <button class="btn btn-sm btn-danger" disabled>💳 @T("Terugbetaling", "Refund")</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #0066cc;">
+            <small style="color: #666;">@T("Totale klanten", "Total Customers")</small>
+            <h3 style="margin: 0.5rem 0 0 0; font-size: 2rem; color: #0066cc;">@GetTotalCustomers()</h3>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #28a745;">
+            <small style="color: #666;">@T("Actieve klanten", "Active Customers")</small>
+            <h3 style="margin: 0.5rem 0 0 0; font-size: 2rem; color: #28a745;">@GetActiveCustomers()</h3>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ffc107;">
+            <small style="color: #666;">@T("Geschorste klanten", "Suspended Customers")</small>
+            <h3 style="margin: 0.5rem 0 0 0; font-size: 2rem; color: #ffc107;">@GetSuspendedCustomers()</h3>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #17a2b8;">
+            <small style="color: #666;">@T("Totale inkomsten", "Total Revenue")</small>
+            <h3 style="margin: 0.5rem 0 0 0; font-size: 1.8rem; color: #17a2b8;">€@GetTotalRevenue().ToString("0.00")</h3>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #721c24;">
+            <strong>❌ @T("Fout", "Error"):</strong> @ErrorMessage
+            <button class="btn btn-sm btn-link" @onclick="() => ErrorMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid #155724;">
+            <strong>✅ @T("Succes", "Success"):</strong> @SuccessMessage
+            <button class="btn btn-sm btn-link" @onclick="() => SuccessMessage = null" style="float: right;">✕</button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<CustomerItem> customers = new();
+    private bool isLoading = true;
+    private string searchTerm = "";
+    private string filterStatus = "";
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+
+    protected override void OnInitialized()
+    {
+        LoadMockData();
+    }
+
+    private void LoadMockData()
+    {
+        isLoading = true;
+
+        customers = new List<CustomerItem>
+        {
+            new CustomerItem
+            {
+                Id = Guid.NewGuid(),
+                FullName = "John Smith",
+                Email = "john.smith@example.com",
+                Status = "Active",
+                CreatedAt = new DateTime(2024, 1, 15),
+                TotalReservations = 3,
+                TotalSpent = 5250m
+            },
+            new CustomerItem
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Maria Garcia",
+                Email = "maria.garcia@example.com",
+                Status = "Active",
+                CreatedAt = new DateTime(2024, 2, 20),
+                TotalReservations = 1,
+                TotalSpent = 1050m
+            },
+            new CustomerItem
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Hans Mueller",
+                Email = "hans.mueller@example.com",
+                Status = "Active",
+                CreatedAt = new DateTime(2023, 11, 10),
+                TotalReservations = 8,
+                TotalSpent = 12800m
+            },
+            new CustomerItem
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Sophie Dubois",
+                Email = "sophie.dubois@example.com",
+                Status = "Suspended",
+                CreatedAt = new DateTime(2024, 3, 5),
+                TotalReservations = 2,
+                TotalSpent = 3150m
+            },
+            new CustomerItem
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Pieter van Dam",
+                Email = "p.vandam@example.com",
+                Status = "Inactive",
+                CreatedAt = new DateTime(2023, 8, 12),
+                TotalReservations = 1,
+                TotalSpent = 900m
+            },
+            new CustomerItem
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Emma Wilson",
+                Email = "emma.wilson@example.com",
+                Status = "Active",
+                CreatedAt = new DateTime(2024, 1, 22),
+                TotalReservations = 5,
+                TotalSpent = 8400m
+            }
+        };
+
+        isLoading = false;
+    }
+
+    private List<CustomerItem> GetFilteredCustomers()
+    {
+        return customers
+            .Where(c => string.IsNullOrEmpty(searchTerm) ||
+                   c.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                   c.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.IsNullOrEmpty(filterStatus) || c.Status == filterStatus)
+            .OrderByDescending(c => c.TotalSpent)
+            .ToList();
+    }
+
+    private int GetTotalCustomers() => customers.Count;
+    private int GetActiveCustomers() => customers.Count(c => c.Status == "Active");
+    private int GetSuspendedCustomers() => customers.Count(c => c.Status == "Suspended");
+    private decimal GetTotalRevenue() => customers.Sum(c => c.TotalSpent);
+
+    public class CustomerItem
+    {
+        public Guid Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public int TotalReservations { get; set; }
+        public decimal TotalSpent { get; set; }
+    }
+}

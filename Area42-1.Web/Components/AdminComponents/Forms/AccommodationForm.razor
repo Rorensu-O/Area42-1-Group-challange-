@@ -1,0 +1,207 @@
+@using Area42_1.Web.Services
+@inherits LocalizedComponentBase
+@inject AccommodationApiClient AccommodationClient
+@inject ILogger<AccommodationForm> Logger
+
+<div style="background: white; padding: 2rem; border-radius: 8px;">
+    <h3>@(IsEditMode ? T("Accommodatie Bewerken", "Edit Accommodation") : T("Nieuwe Accommodatie", "Add Accommodation"))</h3>
+
+    <EditForm Model="FormData" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="form-group mb-3">
+            <label>@T("Naam", "Name") *</label>
+            <InputText class="form-control" @bind-Value="FormData.Name" placeholder="e.g., Beachfront Villa" />
+            <ValidationMessage For="() => FormData.Name" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Type", "Type") *</label>
+            <InputSelect class="form-control" @bind-Value="FormData.Type">
+                <option value="">-- @T("Selecteer type", "Select type") --</option>
+                <option value="Chalet">Chalet</option>
+                <option value="Villa">Villa</option>
+                <option value="Bungalow">Bungalow</option>
+                <option value="Cottage">Cottage</option>
+                <option value="Apartment">Apartment</option>
+            </InputSelect>
+            <ValidationMessage For="() => FormData.Type" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label>@T("Beschrijving", "Description")</label>
+            <InputTextArea class="form-control" @bind-Value="FormData.Description" 
+                          placeholder="@T("Voer beschrijving in...", "Enter description...")" rows="4" />
+            <ValidationMessage For="() => FormData.Description" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Maximale gasten", "Max Guests") *</label>
+                    <InputNumber class="form-control" @bind-Value="FormData.MaxGuests" min="1" max="20" />
+                    <ValidationMessage For="() => FormData.MaxGuests" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Slaapkamers", "Bedrooms") *</label>
+                    <InputNumber class="form-control" @bind-Value="FormData.Bedrooms" min="1" max="10" />
+                    <ValidationMessage For="() => FormData.Bedrooms" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Badkamers", "Bathrooms") *</label>
+                    <InputNumber class="form-control" @bind-Value="FormData.Bathrooms" min="1" max="10" />
+                    <ValidationMessage For="() => FormData.Bathrooms" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>@T("Afbeelding URL", "Image URL")</label>
+                    <InputText class="form-control" @bind-Value="FormData.ImageUrl" 
+                              placeholder="https://example.com/image.jpg" />
+                    <ValidationMessage For="() => FormData.ImageUrl" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-check-label">
+                <InputCheckbox @bind-Value="FormData.IsActive" class="form-check-input" />
+                @T("Actief", "Active")
+            </label>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>❌ @T("Fout", "Error"):</strong> @ErrorMessage
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+                @if (IsSubmitting)
+                {
+                    <span>⏳ @T("Opslaan...", "Saving...")</span>
+                }
+                else
+                {
+                    <span>💾 @(IsEditMode ? T("Update", "Update") : T("Toevoegen", "Add"))</span>
+                }
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="OnCancel" disabled="@IsSubmitting">
+                @T("Annuleren", "Cancel")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public AccommodationDto? InitialData { get; set; }
+
+    [Parameter]
+    public EventCallback<AccommodationDto> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private class AccommodationFormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int MaxGuests { get; set; } = 4;
+        public int Bedrooms { get; set; } = 2;
+        public int Bathrooms { get; set; } = 1;
+        public string ImageUrl { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+
+        public void MapFromDto(AccommodationDto dto)
+        {
+            Name = dto.Name;
+            Type = dto.Type;
+            Description = dto.Description;
+            MaxGuests = dto.MaxGuests;
+            Bedrooms = dto.Bedrooms;
+            Bathrooms = dto.Bathrooms;
+            ImageUrl = dto.ImageUrl;
+            IsActive = dto.IsActive;
+        }
+    }
+
+    private AccommodationFormModel FormData = new();
+    private bool IsEditMode = false;
+    private bool IsSubmitting = false;
+    private string? ErrorMessage;
+
+    protected override void OnInitialized()
+    {
+        if (InitialData != null)
+        {
+            IsEditMode = true;
+            FormData.MapFromDto(InitialData);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            IsSubmitting = true;
+            ErrorMessage = null;
+
+            if (IsEditMode && InitialData?.Id != null)
+            {
+                // Update existing - would call API update method
+                Logger.LogInformation("Would update accommodation {Id}", InitialData.Id);
+                var updatedDto = new AccommodationDto
+                {
+                    Id = InitialData.Id,
+                    Name = FormData.Name,
+                    Type = FormData.Type,
+                    Description = FormData.Description,
+                    MaxGuests = FormData.MaxGuests,
+                    Bedrooms = FormData.Bedrooms,
+                    Bathrooms = FormData.Bathrooms,
+                    ImageUrl = FormData.ImageUrl ?? string.Empty,
+                    IsActive = FormData.IsActive
+                };
+                await OnSave.InvokeAsync(updatedDto);
+            }
+            else
+            {
+                // Create new - would call API create method
+                Logger.LogInformation("Would create new accommodation");
+                var newDto = new AccommodationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = FormData.Name,
+                    Type = FormData.Type,
+                    Description = FormData.Description,
+                    MaxGuests = FormData.MaxGuests,
+                    Bedrooms = FormData.Bedrooms,
+                    Bathrooms = FormData.Bathrooms,
+                    ImageUrl = FormData.ImageUrl ?? string.Empty,
+                    IsActive = FormData.IsActive
+                };
+                await OnSave.InvokeAsync(newDto);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving accommodation");
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+}
