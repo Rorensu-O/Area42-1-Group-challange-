@@ -9,9 +9,17 @@
 
 A modern, full-featured holiday reservation system built with **.NET 10, Blazor Server, and ASP.NET Core**, featuring a comprehensive admin portal with role-based access control (RBAC), kill switch protocol, financial approval system, GDPR compliance tools, and **complete local development setup with AWS deployment readiness**.
 
-🎯 **Current Status**: ✅ Fully operational for local development | ✅ Prepared for AWS deployment (files ready, no code changes needed)
+🎯 **Current Status**: ✅ Fully operational for local development | ✅ Unified login system implemented | ✅ Complete mock data with 54 test records | ✅ All admin roles with RBAC | ✅ Prepared for AWS deployment (files ready, no code changes needed)
 
 ## 🚀 Features
+
+### 🔐 Unified Authentication System (NEW!)
+- **Single Login Page** - One `/login` entry point for all users
+- **Smart Routing** - Auto-routes to admin/customer dashboard based on JWT claims
+- **Email Domain Detection** - `@area42.nl` email domain automatically recognized as admin
+- **Role-Based Access Control (RBAC)** - 15 distinct roles with granular permissions
+- **JWT Token Management** - Secure localStorage-based authentication
+- **Session Management** - Auto-logout and token refresh capabilities
 
 ### 📅 Reservation System
 - Holiday accommodation booking and management
@@ -20,15 +28,21 @@ A modern, full-featured holiday reservation system built with **.NET 10, Blazor 
 - User account management (register/login)
 - Guest information tracking and special requests
 
-### 👑 Admin Portal (NEW!)
-- **Role-Based Access Control (RBAC)** - 9 admin ranks + 3 HR ranks
-- **Dashboard Overview** - KPIs, system health, quick access
+### 👑 Admin Portal (Enhanced!)
+- **Unified Dashboard** - Single entry point with role-based sections
+- **Role-Based Access Control (RBAC)** - 12 admin ranks + 3 HR ranks (15 total)
+- **15 Admin Role Types:**
+  - **Tier 1** (Full Access): SuperAdmin, Admin, SeniorManager
+  - **Tier 2** (Specialized): PropertyManager, BookingManager, CustomerSupport
+  - **Tier 3** (Supervised): SeniorIntern, Intern, InternAdmin
+  - **HR Department**: HRManager, HREmployee, HRIntern
+- **Customer Management** - Account lifecycle, status tracking, refund history
+- **Reservation Management** - Pricing adjustments, cancellations, refunds
 - **Security Management** - Kill switch protocol with 2-person quorum
-- **Staff Management** - Personnel CRUD, rank assignment, internship tracking
-- **Financial System** - Transaction approval with tiered thresholds (€150/€500/€2000)
+- **Financial Approval** - Transaction approval with tiered thresholds (€150/€500/€2000)
 - **GDPR Tools** - Erasure requests (30-day SLA), consent logging, compliance status
 - **Audit Logs** - Immutable tracking of all admin actions
-- **Security Flags** - SIEM-ready incident flagging
+- **Page Customization** - Admin-specific portals by role
 
 ### 🔐 Security Features
 - JWT-based authentication with role claims
@@ -103,20 +117,14 @@ cd Area42-1
 
 ### Test Accounts (Auto-Seeded)
 
-**Admin Login:**
-```
-Email: superadmin@area42.nl
-Password: SuperAdmin@123
-```
+✅ **Mock data is auto-seeded on first run!**
 
-**Other Admin Accounts:**
-- admin1@area42.nl / Admin@123
-- propertymanager@area42.nl / Property@111
-- bookingmanager@area42.nl / Booking@222
+The application includes 54 test records (15 admin users, 17 customers, 6 accommodations, 16 reservations) for immediate testing.
 
-**Customer Accounts:**
-- guest1@example.com / Guest@123
-- guest2@example.com / Guest@456
+**Credentials**: See the local documentation after running the app:
+- Check console output on first run for test account details
+- Or open `ADMIN_CREDENTIALS_CARD.md` in your local workspace (not on GitHub)
+- Default admin email domain is `@area42.nl` for automatic admin routing
 
 ### Access Points
 | URL | Purpose |
@@ -145,27 +153,35 @@ dotnet ef migrations list
 
 ## 📚 Documentation
 
-### Quick Navigation
-| Document | Purpose | For Whom |
-|----------|---------|----------|
-| **[START_HERE.md](START_HERE.md)** | 🎯 Complete project overview | Everyone |
-| **[STARTUP_CHECKLIST.md](STARTUP_CHECKLIST.md)** | ✅ Step-by-step startup guide | Developers |
-| **[LOCAL_SETUP_GUIDE.md](LOCAL_SETUP_GUIDE.md)** | 🏠 Local configuration details | DevOps/Developers |
-| **[LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md)** | 💻 Development workflow | Developers |
-| **[AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md)** | ☁️ AWS deployment steps (future) | DevOps |
-| **[SOLUTION_SUMMARY.md](SOLUTION_SUMMARY.md)** | 📊 Complete feature overview | Project Managers |
-| **[IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md)** | 🔍 Technical implementation details | Architects |
-| **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** | ✔️ Pre-launch verification | QA/DevOps |
-
-### Admin Portal Documentation
+### 🎯 Essential Quick-Start Docs
 | Document | Purpose | Read Time |
 |----------|---------|-----------|
-| **[README_ADMIN_PORTAL.md](README_ADMIN_PORTAL.md)** | Complete admin system overview | 15 min |
-| **[API_REFERENCE.md](API_REFERENCE.md)** | 40+ endpoint specifications | 1 hour |
-| **[ADMIN_QUICKSTART.md](ADMIN_QUICKSTART.md)** | 5-minute admin setup | 5 min |
-| **[ADMIN_PORTAL_IMPLEMENTATION.md](ADMIN_PORTAL_IMPLEMENTATION.md)** | Full architecture & design | 30 min |
-| **[INTEGRATION_CHECKLIST.md](INTEGRATION_CHECKLIST.md)** | 9-phase implementation roadmap | 30 min |
-| **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** | Admin role & feature cheat sheet | 5 min |
+| **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** | 🔓 Unified login & testing guide | 5 min |
+| **[START_HERE.md](START_HERE.md)** | 🎯 Project overview & navigation | 10 min |
+| **[STARTUP_CHECKLIST.md](STARTUP_CHECKLIST.md)** | ✅ Step-by-step setup & troubleshooting | 10 min |
+
+### 🏠 Developer & Setup Docs
+| Document | Purpose | For Whom |
+|----------|---------|----------|
+| **[LOCAL_SETUP_GUIDE.md](LOCAL_SETUP_GUIDE.md)** | 🏠 Local configuration & database setup | Developers/DevOps |
+| **[LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md)** | 💻 Daily development workflow | Developers |
+| **[MOCK_DATA_GUIDE.md](MOCK_DATA_GUIDE.md)** | 📊 Mock data details (roles, customers, scenarios) | **Local workspace only** |
+
+### 👑 Admin Portal Docs
+| Document | Purpose | Read Time |
+|----------|---------|-----------|
+| **[UNIFIED_LOGIN_IMPLEMENTATION.md](UNIFIED_LOGIN_IMPLEMENTATION.md)** | 🔐 Authentication system details | 15 min |
+| **[README_ADMIN_PORTAL.md](README_ADMIN_PORTAL.md)** | 👑 Admin system overview | 15 min |
+| **[API_REFERENCE.md](API_REFERENCE.md)** | 🔌 40+ endpoint specifications | 1 hour |
+
+### ☁️ Deployment Docs
+| Document | Purpose |
+|----------|---------|
+| **[AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md)** | ☁️ AWS ECS/RDS deployment steps (future) |
+| **[SOLUTION_SUMMARY.md](SOLUTION_SUMMARY.md)** | 📊 Complete feature overview |
+| **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** | ✔️ Pre-launch verification |
+
+⚠️ **Note**: Detailed credential tables are in `ADMIN_CREDENTIALS_CARD.md` - found in your local workspace after running the app, but NOT published to GitHub for security.
 
 ## ☁️ AWS Deployment (Future-Ready)
 
@@ -196,11 +212,13 @@ The application is optimized for local development now, but can be deployed to A
 ### Automatic Setup
 ✅ **Database Auto-Creation** - LocalDB (SQL Server Express) creates automatically  
 ✅ **Auto-Migration** - Database migrations apply on startup  
-✅ **Auto-Seeding** - Test data seeded automatically (8 admin users, 3 customers, 6 accommodations)  
+✅ **Auto-Seeding** - 54 test records seeded automatically (15 admin users, 17 customers, 6 accommodations, 16 reservations)  
 ✅ **Service Orchestration** - .NET Aspire auto-starts API and Web services  
+✅ **Unified Login** - Single `/login` page with smart admin/customer routing  
+✅ **JWT Authentication** - Secure token-based auth with localStorage  
 ✅ **CORS Enabled** - Cross-origin requests work seamlessly  
 ✅ **Hot Reload** - Code changes compile instantly during debugging  
-✅ **Full Localization** - Complete Dutch/English language support  
+✅ **Full Localization** - Complete Dutch/English language support
 
 ### Local Configuration
 All configured in `appsettings.Development.json`:
@@ -251,25 +269,19 @@ docker-compose up
 
 ### Mock Data Included
 
-**Admin Users (Ready to Login)**
-| Email | Password | Role |
-|-------|----------|------|
-| superadmin@area42.nl | SuperAdmin@123 | Super Admin |
-| admin1@area42.nl | Admin@123 | Admin |
-| propertymanager@area42.nl | Property@111 | Property Manager |
-| bookingmanager@area42.nl | Booking@222 | Booking Manager |
-| support@area42.nl | Support@333 | Support Staff |
-| hrmanager@area42.nl | HRManager@444 | HR Manager |
+**Auto-Seeded on Startup:**
+- ✅ **15 Admin Users** - All 12 admin rank types + test cases
+- ✅ **17 Customer Users** - VIP, active, suspended, refund scenarios, enterprise accounts
+- ✅ **6 Accommodations** - Bungalows, chalets, camping with varied capacity
+- ✅ **16 Reservations** - Past bookings, cancellations, refunds, pricing variations
 
-**Customer Users**
-| Email | Password |
-|-------|----------|
-| guest1@example.com | Guest@123 |
-| guest2@example.com | Guest@456 |
+**See Credentials Locally:**
+After running the app, credentials are available in:
+1. **ADMIN_CREDENTIALS_CARD.md** - Quick reference for all test accounts
+2. **MOCK_DATA_GUIDE.md** - Detailed roles, permissions, and scenarios
+3. **Console Output** - Displays seeding progress on first run
 
-**Accommodations**
-- 6 sample bungalows, chalets, and camping accommodations
-- Auto-loaded from DatabaseSeeder.cs
+This data is perfect for testing the admin panel, refund workflows, role-based access control, and pricing management without modifying source code.
 
 ### Troubleshooting
 
@@ -280,6 +292,9 @@ docker-compose up
 | **Port Already in Use** | Kill process with `taskkill /F /IM dotnet.exe` or change port |
 | **HTTPS Certificate Error** | Trust certificate with `dotnet dev-certs https --trust` |
 | **Slow Startup** | Clear NuGet cache with `dotnet nuget locals all --clear` |
+| **Mock Data Not Seeding** | Check console output - should show "✅ Database seeded successfully!" on first run |
+| **Login Not Working** | Ensure LocalDB has the seeded data; check `ADMIN_CREDENTIALS_CARD.md` locally |
+| **Admin Dashboard Empty** | Mock data should auto-seed - check database exists with `dotnet ef migrations list` |
 
 See [STARTUP_CHECKLIST.md](STARTUP_CHECKLIST.md) for comprehensive troubleshooting.
 
@@ -330,23 +345,34 @@ GET    /compliance-status              # Check GDPR status
 
 For complete API specifications, see [API_REFERENCE.md](API_REFERENCE.md)
 
-## 👥 Admin Ranks
+## 👥 Admin Ranks (15 Total)
 
-### Operational Ranks (9)
-- **SuperAdmin** (Tier 1) - Full system access
-- **Admin** (Tier 1) - Administrative access
-- **SeniorManager** (Tier 1) - Financial & GDPR oversight
-- **PropertyManager** (Tier 2) - Property management
-- **BookingManager** (Tier 2) - Booking oversight
-- **CustomerSupport** (Tier 2) - Customer service
-- **SeniorIntern** (Tier 3) - Senior intern
-- **Intern** (Tier 3) - General intern
-- **InternAdmin** (Tier 3) - Intern administrator
+### Tier 1: Strategic Leadership (Full System Access)
+- **SuperAdmin** - Complete system control, all features
+- **Admin** - Administrative access, user/staff management
+- **SeniorManager** - Financial & GDPR oversight, strategic decisions
 
-### HR Ranks (3)
-- **HRManager** - HR administration
-- **HREmployee** - HR staff
-- **HRIntern** - HR intern
+### Tier 2: Specialized Management (Domain-Specific Access)
+- **PropertyManager** - Property and accommodation management
+- **BookingManager** - Reservation oversight and coordination
+- **CustomerSupport** - Customer service and account management
+
+### Tier 3: Supervised Access (Limited Features, Training Focused)
+- **SeniorIntern** - Senior-level intern with broader access
+- **Intern** - General intern with basic access
+- **InternAdmin** - Intern with administrative duties
+
+### HR Department (3 Roles)
+- **HRManager** - HR administration and personnel management
+- **HREmployee** - HR staff with standard access
+- **HRIntern** - HR intern with limited access
+
+**Role Assignment & Permissions:**
+- Each role has specific permission sets
+- Time-limited internships (auto-expiry)
+- MFA-enabled for Tier 1 roles
+- Audit logging for all role changes
+- See `ADMIN_CREDENTIALS_CARD.md` for local testing details
 
 ## 📊 Database Schema
 
@@ -375,6 +401,7 @@ dotnet test --filter "ClassName=MyTestClass"
 ## 🔐 Security Highlights
 
 ✅ JWT authentication with role claims  
+✅ Unified login with smart role-based routing  
 ✅ 2-person quorum for critical operations  
 ✅ 10-minute auto-expiry for emergency requests  
 ✅ Immutable audit logging (all admin actions)  
@@ -383,6 +410,12 @@ dotnet test --filter "ClassName=MyTestClass"
 ✅ Rate limiting framework  
 ✅ Session management framework  
 ✅ PII encryption fields  
+
+**Credential Security**:
+- ✅ Mock data credentials NOT published to GitHub
+- ✅ Credentials stored only in local workspace
+- ✅ See `ADMIN_CREDENTIALS_CARD.md` after running locally
+- ✅ Production credentials managed via AWS Secrets Manager
 
 ## 🚀 Deployment
 
@@ -423,16 +456,18 @@ See [AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md) for detailed AWS deployme
 
 | Component | Status | Details |
 |-----------|--------|---------|
+| **Unified Login System** | ✅ Complete | Single `/login` page, role-based routing, JWT tokens |
+| **Admin Portal** | ✅ Complete | All 15 admin ranks with RBAC fully implemented |
+| **Mock Data** | ✅ Complete | 54 test records (15 admins, 17 customers, 6 accommodations, 16 reservations) |
 | **Local Development** | ✅ Ready | Database auto-seeds, services auto-orchestrate |
-| **Admin Portal** | ✅ Complete | All 9 admin ranks + RBAC fully implemented |
 | **Database** | ✅ Complete | Auto-migrates, auto-seeds on startup |
 | **API Endpoints** | ✅ Complete | 40+ endpoints for admin, security, financial, GDPR |
+| **Role-Based Access** | ✅ Complete | 15 distinct roles with granular permissions |
 | **Localization** | ✅ Complete | Full Dutch/English support |
-| **Attractions Page** | ✅ Complete | Eindhoven attractions with real external links |
 | **Docker Files** | ✅ Ready | For local testing or AWS deployment |
 | **AWS CloudFormation** | ✅ Ready | Infrastructure template prepared (not active) |
 | **CI/CD Pipeline** | ✅ Ready | GitHub Actions workflow prepared (not active) |
-| **Documentation** | ✅ Complete | 13+ comprehensive guides included |
+| **Documentation** | ✅ Complete | 15+ comprehensive guides included |
 | **Build Status** | ✅ Passing | All tests pass, no compilation errors |
 
 ---
@@ -464,13 +499,17 @@ See [AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md) for detailed AWS deployme
 
 ## 📞 Support
 
+- 📖 **Quick Start**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
 - 📚 **Documentation Hub**: [START_HERE.md](START_HERE.md)
-- 🚀 **Get Started Quickly**: [STARTUP_CHECKLIST.md](STARTUP_CHECKLIST.md)
-- 🔌 **API Reference**: [API_REFERENCE.md](API_REFERENCE.md)
+- 🚀 **Getting Started**: [STARTUP_CHECKLIST.md](STARTUP_CHECKLIST.md)
+- 🔐 **Login System**: [UNIFIED_LOGIN_IMPLEMENTATION.md](UNIFIED_LOGIN_IMPLEMENTATION.md)
 - 👑 **Admin Portal**: [README_ADMIN_PORTAL.md](README_ADMIN_PORTAL.md)
+- 🔌 **API Reference**: [API_REFERENCE.md](API_REFERENCE.md)
 - ☁️ **AWS Deployment**: [AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md)
 - 🐛 **Issues**: GitHub Issues
 - 💬 **Questions**: GitHub Discussions
+
+**Note**: Detailed test account credentials are in `ADMIN_CREDENTIALS_CARD.md` in your local workspace (not on GitHub)
 
 ---
 
@@ -486,6 +525,15 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - Fully typed .NET 10 with strict null checking
 - Comprehensive error handling
 - Extensive logging and audit trails
+- Clean architecture with separation of concerns
+
+✅ **Modern Authentication**
+- Unified single-page login system
+- JWT token-based authentication
+- localStorage for persistent sessions
+- Smart email domain detection (@area42.nl = admin)
+- Role-based access control (15 distinct roles)
+- Post-login navigation based on user type
 
 ✅ **Enterprise Security**
 - 2-person quorum for critical operations
@@ -496,17 +544,26 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 ✅ **Business Features**
 - Accommodation reservation system
 - Financial approval workflows
-- Staff management with 12 admin ranks
+- Staff management with 15 admin ranks (12 operational + 3 HR)
+- Customer account management with refund processing
+- Pricing management and adjustments
 - GDPR erasure requests with 30-day SLA
-- Security incident flagging
+
+✅ **Comprehensive Test Data**
+- 54 realistic mock records pre-loaded
+- 15 admin users across all role types
+- 17 customer profiles with varied scenarios
+- 6 accommodation types with inventory
+- 16 reservation examples with pricing variations
+- Perfect for testing without creating data manually
 
 ✅ **Developer Experience**
 - Full Dutch/English localization
-- Mock data auto-seeded
 - Hot reload during development
-- Comprehensive documentation
+- Comprehensive documentation (15+ guides)
 - Docker containerization
 - AWS deployment prepared
+- Easy local setup with auto-seeding
 
 ---
 
@@ -522,10 +579,13 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ---
 
-**Status**: ✅ **PRODUCTION READY FOR LOCAL DEVELOPMENT** | ✅ **AWS DEPLOYMENT PREPARED**
+---
 
-Last updated: 2024  
+**Status**: ✅ **PRODUCTION READY FOR LOCAL DEVELOPMENT** | ✅ **Unified Login Implemented** | ✅ **Admin Portal Complete** | ✅ **Mock Data Ready** | ✅ **AWS Deployment Prepared**
+
+Last updated: January 2025  
 Repository: https://github.com/Rorensu-O/Area42-1-Group-challange-  
-Branch: `master`  
+Branch: `admin-login-test` (dev) | `master` (production)  
 Build: ✅ Passing  
-Tests: ✅ All Green
+Tests: ✅ All Green  
+Compatibility: ✅ Aspire | ✅ Docker | ✅ AWS ECS/RDS
