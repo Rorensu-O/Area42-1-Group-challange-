@@ -1,23 +1,28 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
+using Microsoft.JSInterop;
+using System.Text.Json;
 
 namespace Area42_1.Web;
 
 public class CustomAuthStateProvider : AuthenticationStateProvider
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private ISession? _session;
+    private readonly IJSRuntime _jsRuntime;
+    private readonly HttpClient _httpClient;
+    private const string TokenKey = "auth_token";
+    private const string AdminFlagKey = "is_admin";
 
-    public CustomAuthStateProvider(IHttpClientFactory httpClientFactory)
+    public CustomAuthStateProvider(IJSRuntime jsRuntime, HttpClient httpClient)
     {
-        _httpClientFactory = httpClientFactory;
+        _jsRuntime = jsRuntime;
+        _httpClient = httpClient;
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         try
         {
-            var token = GetTokenFromStorage();
+            var token = await GetTokenFromStorageAsync();
 
             if (string.IsNullOrEmpty(token))
             {
@@ -30,43 +35,75 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 
             return new AuthenticationState(principal);
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Auth state error: {ex.Message}");
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
     }
 
     public async Task LoginAsync(string token)
     {
-        SaveTokenToStorage(token);
+        await SaveTokenToStorageAsync(token);
+
+        // Parse token to check if admin
+        var claims = ParseClaimsFromToken(token);
+        var isAdmin = claims.Any(c => c.Type == "userType" && c.Value == "Admin") ||
+                     claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
+
+        if (isAdmin)
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", AdminFlagKey, "true");
+        }
+
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
     public async Task LogoutAsync()
     {
-        RemoveTokenFromStorage();
+        await RemoveTokenFromStorageAsync();
+        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", AdminFlagKey);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
-    private string? GetTokenFromStorage()
+    private async Task<string?> GetTokenFromStorageAsync()
     {
-        // In a real application, you would store this in localStorage via JS interop
-        return null;
+        try
+        {
+            return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", TokenKey);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
-    private void SaveTokenToStorage(string token)
+    private async Task SaveTokenToStorageAsync(string token)
     {
-        // In a real application, you would store this in localStorage via JS interop
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", TokenKey, token);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save token: {ex.Message}");
+        }
     }
 
-    private void RemoveTokenFromStorage()
+    private async Task RemoveTokenFromStorageAsync()
     {
-        // In a real application, you would remove from localStorage via JS interop
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", TokenKey);
+        }
+        catch
+        {
+            // Ignore removal failures
+        }
     }
 
     private List<Claim> ParseClaimsFromToken(string token)
     {
-        // Simplified claim parsing - in production use a proper JWT library
         var claims = new List<Claim>();
 
         try
@@ -83,27 +120,39 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
                 var decodedBytes = Convert.FromBase64String(payload);
                 var json = System.Text.Encoding.UTF8.GetString(decodedBytes);
 
-                // Parse basic claims - in production use JsonSerializer
-                if (json.Contains("sub"))
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, ExtractJsonValue(json, "sub")));
-                if (json.Contains("email"))
-                    claims.Add(new Claim(ClaimTypes.Email, ExtractJsonValue(json, "email")));
-                if (json.Contains("role"))
-                    claims.Add(new Claim(ClaimTypes.Role, ExtractJsonValue(json, "role")));
+                // Use JsonDocument for safe parsing
+                using (var doc = JsonDocument.Parse(json))
+                {
+                    foreach (var element in doc.RootElement.EnumerateObject())
+                    {
+                        var claimType = MapClaimType(element.Name);
+                        var claimValue = element.Value.GetString() ?? element.Value.ToString();
+
+                        if (!string.IsNullOrEmpty(claimValue))
+                        {
+                            claims.Add(new Claim(claimType, claimValue));
+                        }
+                    }
+                }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Token parsing failed
+            System.Diagnostics.Debug.WriteLine($"Token parsing error: {ex.Message}");
         }
 
         return claims;
     }
 
-    private string ExtractJsonValue(string json, string key)
+    private string MapClaimType(string jwtClaimName) => jwtClaimName switch
     {
-        var startIndex = json.IndexOf($"\"{key}\":\"") + key.Length + 4;
-        var endIndex = json.IndexOf("\"", startIndex);
-        return json.Substring(startIndex, endIndex - startIndex);
-    }
+        "sub" => ClaimTypes.NameIdentifier,
+        "email" => ClaimTypes.Email,
+        "role" => ClaimTypes.Role,
+        "rank" => "rank",
+        "name" => ClaimTypes.Name,
+        "isAdmin" => "isAdmin",
+        "userType" => "userType",
+        _ => jwtClaimName
+    };
 }

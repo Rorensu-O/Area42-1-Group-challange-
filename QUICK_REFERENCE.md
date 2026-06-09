@@ -397,6 +397,88 @@ Update-Database
 ```
 ✓ Include "Bearer " prefix in header
 ✓ Check token hasn't expired (24 hours)
+```
+
+---
+
+## 🔐 Unified Login System
+
+### Overview
+- **Single Login Page:** `/login`
+- **Single API Endpoint:** `POST /api/auth/login`
+- **Admin Recognition:** Email ends with `@area42.nl`
+- **Role-Based Routing:** Admin → `/admin`, Customer → `/`
+
+### Test Accounts
+
+**Customer (Test)**
+```
+Email: customer@example.com
+Password: <any valid password>
+Expected Result: Redirect to / (home page)
+```
+
+**Admin (Test)**
+```
+Email: admin@area42.nl
+Password: <valid admin password>
+Expected Result: Redirect to /admin (admin dashboard)
+```
+
+### Login Response Format
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGc...",
+  "user": {
+    "id": "user-id",
+    "email": "user@example.com"
+  },
+  "isAdmin": false,
+  "userRank": null
+}
+```
+
+**For Admin:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGc...",
+  "user": {
+    "id": "admin-id",
+    "email": "admin@area42.nl"
+  },
+  "isAdmin": true,
+  "userRank": "SuperAdmin"
+}
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `Area42-1.ApiService/Services/AuthService.cs` | Email domain routing & JWT generation |
+| `Area42-1.ApiService/Data/Repositories/AdminRepository.cs` | Admin user lookups |
+| `Area42-1.Web/Components/Pages/Login.razor` | Login form & post-login routing |
+| `Area42-1.Web/CustomAuthStateProvider.cs` | JWT storage & claims parsing |
+| `Area42-1.Web/Components/Layout/NavMenu.razor` | Auth-aware navigation |
+
+### Troubleshooting
+
+**Admin login goes to home instead of admin panel**
+- Verify email ends with `@area42.nl`
+- Check JWT token contains `isAdmin: true` claim
+- Clear browser localStorage and try again
+
+**Admin link missing in NavMenu**
+- Check browser console for errors
+- Verify localStorage has `is_admin` flag set
+- Inspect JWT token in developer tools
+
+**"Contact administrator" error on login**
+- Check AdminUsers table: account must have `IsEnabled=true` and `IsLocked=false`
+- Verify password is correct
 ✓ Check JWT key in appsettings.json
 ✓ Verify token format: Header.Payload.Signature
 ```

@@ -1,5 +1,33 @@
 ﻿@page "/"
 @inherits LocalizedComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@implements IAsyncDisposable
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>@T("Area42 - Accommodatiereserveringen in Eindhoven", "Area42 - Accommodation Reservations in Eindhoven")</PageTitle>
+
+<AuthorizeView>
+    <NotAuthorized>
+        <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
+            <h3 style="margin-top: 0; color: #1565c0;">@T("Welkom bij Area42!", "Welcome to Area42!")</h3>
+            <p>@T("Log in of registreer om accommodaties te boeken of voor admin-toegang.", "Sign in or register to book accommodations or for admin access.")</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/login" class="btn btn-primary">@T("Inloggen", "Sign In")</a>
+                <a href="/register" class="btn btn-outline">@T("Registreren", "Register")</a>
+            </div>
+        </div>
+    </NotAuthorized>
+    <Authorized>
+        @if (_isAdmin)
+        {
+            <div style="background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
+                <h3 style="margin-top: 0; color: #e65100;">@T("Welkom, Administrator!", "Welcome, Administrator!")</h3>
+                <p>@T("U bent ingelogd als administrator.", "You are logged in as administrator.")</p>
+                <a href="/admin" class="btn btn-primary">@T("Ga naar adminpaneel", "Go to Admin Panel")</a>
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
 
 <PageTitle>@T("Area42 - Accommodatiereserveringen in Eindhoven", "Area42 - Accommodation Reservations in Eindhoven")</PageTitle>
 
@@ -237,6 +265,29 @@
 </style>
 
 @code {
+    private bool _isAdmin = false;
+    private AuthenticationState? _authState;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckIfAdmin();
+    }
+
+    private async Task CheckIfAdmin()
+    {
+        _authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = _authState?.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            _isAdmin = user.Claims.Any(c => (c.Type == "userType" && c.Value == "Admin") || 
+                                              (c.Type == "isAdmin" && c.Value == "true"));
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        // Cleanup if needed
+    }
 }
 
