@@ -14,23 +14,16 @@
         <p>@T("Even geduld alstublieft...", "Please wait...")</p>
     </div>
 }
-else
+else if (!_isAuthenticated)
 {
-    <AuthorizeView>
-        <NotAuthorized>
-            <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
-                <h3 style="margin-top: 0; color: #1565c0;">@T("Welkom bij Area42!", "Welcome to Area42!")</h3>
-                <p>@T("Log in of registreer om accommodaties te boeken of voor admin-toegang.", "Sign in or register to book accommodations or for admin access.")</p>
-                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="/login" class="btn btn-primary">@T("Inloggen", "Sign In")</a>
-                    <a href="/register" class="btn btn-outline">@T("Registreren", "Register")</a>
-                </div>
-            </div>
-        </NotAuthorized>
-        <Authorized>
-            <!-- Authenticated content -->
-        </Authorized>
-    </AuthorizeView>
+    <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
+        <h3 style="margin-top: 0; color: #1565c0;">@T("Welkom bij Area42!", "Welcome to Area42!")</h3>
+        <p>@T("Log in of registreer om accommodaties te boeken of voor admin-toegang.", "Sign in or register to book accommodations or for admin access.")</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="/login" class="btn btn-primary">@T("Inloggen", "Sign In")</a>
+            <a href="/register" class="btn btn-outline">@T("Registreren", "Register")</a>
+        </div>
+    </div>
 
     <div class="hero-section" style="background: linear-gradient(135deg, #003580 0%, #00c0a3 100%); color: white; padding: 4rem 2rem; text-align: center; margin: -2rem -2rem 2rem -2rem;">
         <div class="container">
@@ -254,6 +247,7 @@ else
 
 @code {
     private bool _isChecking = true;
+    private bool _isAuthenticated = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -269,14 +263,19 @@ else
 
         if (user?.Identity?.IsAuthenticated == true)
         {
+            _isAuthenticated = true;
             var isAdmin = user.Claims.Any(c => 
                 (c.Type == "userType" && c.Value == "Admin") || 
                 (c.Type == "isAdmin" && c.Value == "true") ||
-                (c.Type == "rank" != null));
+                (c.Type == "rank"));
 
             // Redirect based on user type
             var redirectUrl = isAdmin ? "/admin-dashboard" : "/reservations";
             Navigation.NavigateTo(redirectUrl);
+        }
+        else
+        {
+            _isAuthenticated = false;
         }
     }
 

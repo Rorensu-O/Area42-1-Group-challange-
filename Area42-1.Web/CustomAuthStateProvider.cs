@@ -11,6 +11,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     private readonly HttpClient _httpClient;
     private const string TokenKey = "auth_token";
     private const string AdminFlagKey = "is_admin";
+    private bool _jsInteropInitialized = false;
 
     public CustomAuthStateProvider(IJSRuntime jsRuntime, HttpClient httpClient)
     {
@@ -50,7 +51,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         var claims = ParseClaimsFromToken(token);
         var detectedAdmin = isAdmin || claims.Any(c => c.Type == "userType" && c.Value == "Admin") ||
                      claims.Any(c => c.Type == "isAdmin" && c.Value == "true") ||
-                     claims.Any(c => c.Type == "rank" != null);
+                     claims.Any(c => c.Type == "rank");
 
         if (detectedAdmin || isAdmin)
         {
@@ -75,7 +76,16 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     {
         try
         {
+            if (!_jsInteropInitialized)
+            {
+                _jsInteropInitialized = true;
+            }
             return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", TokenKey);
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+            return null;
         }
         catch
         {
@@ -89,6 +99,11 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         {
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", TokenKey, token);
         }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+            System.Diagnostics.Debug.WriteLine("Cannot save token: JS interop not available");
+        }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to save token: {ex.Message}");
@@ -100,6 +115,10 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         try
         {
             await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", TokenKey);
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
         }
         catch
         {
