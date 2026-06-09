@@ -267,7 +267,6 @@ docker-compose up
 # API: http://localhost:7001
 ```
 
-### Mock Data Included
 
 **Auto-Seeded on Startup:**
 - ✅ **15 Admin Users** - All 12 admin rank types + test cases
